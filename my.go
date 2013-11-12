@@ -2,12 +2,12 @@ package main
 
 import (
 	//"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"math"
-  "os"
-  "image"
-  "image/color"
-  "image/png"
 	"math/rand"
+	"os"
 )
 
 func f0(x, y, a, b, c, d, e, f float64) (float64, float64) {
@@ -36,13 +36,13 @@ func f5(x, y, a, b, c, d, e, f float64) (float64, float64) {
 
 func maxmx(arr [][]int) int {
 	mx := 0
-  snd := 0
-  thrd := 0
+	snd := 0
+	thrd := 0
 	for _, row := range arr {
 		for _, v := range row {
 			if mx < v {
-        thrd = snd
-        snd = mx
+				thrd = snd
+				snd = mx
 				mx = v
 			}
 		}
@@ -51,8 +51,8 @@ func maxmx(arr [][]int) int {
 }
 
 func flame(width, height, iters int) *image.RGBA {
-	x := rand.Float64()*2-1
-	y := rand.Float64()*2-1
+	x := rand.Float64()*2 - 1
+	y := rand.Float64()*2 - 1
 	mx := make([][]int, height)
 	for y := range mx {
 		mx[y] = make([]int, width)
@@ -66,37 +66,37 @@ func flame(width, height, iters int) *image.RGBA {
 	for at := 0; at < iters; at++ {
 		//fmt.Println("before", x, y)
 		x, y = funcs[rand.Intn(len(funcs))](x, y, a, b, c, d, e, f)
-    if x < -1 {
-       x = -1
-       continue
-    }
-    if x > 1 {
-       x = 1
-       continue
-    }
-    if y < -1 {
-      y = -1
-       continue
-    }
-    if y > 1 {
-      y = 1
-       continue
-    }
+		if x < -1 {
+			x = -1
+			continue
+		}
+		if x > 1 {
+			x = 1
+			continue
+		}
+		if y < -1 {
+			y = -1
+			continue
+		}
+		if y > 1 {
+			y = 1
+			continue
+		}
 		//fmt.Println("after", x,y)
 		if at < 20 {
 			continue
 		}
-		mx[int((y + 1) / 2 * float64(height-1))][int((x + 1) / 2 * float64(width-1))] += 1
+		mx[int((y+1)/2*float64(height-1))][int((x+1)/2*float64(width-1))] += 1
 	}
 	max := maxmx(mx)
-  m := image.NewRGBA(image.Rect(0, 0, width, height))
+	m := image.NewRGBA(image.Rect(0, 0, width, height))
 	for x, row := range mx {
 		for y, v := range row {
 			val := uint8(255 * v / max)
-      if val > 255 {
-        val = 255
-      }
-			m.Set(x, y, color.RGBA{val, val * 100/255, val, 255})
+			if val > 255 {
+				val = 255
+			}
+			m.Set(x, y, color.RGBA{val, val * 100 / 255, val, 255})
 		}
 	}
 	return m
@@ -104,8 +104,8 @@ func flame(width, height, iters int) *image.RGBA {
 
 func main() {
 	m := flame(800, 800, 10000000)
-  toimg, _ := os.Create("new1235.png")
-  defer toimg.Close()
+	toimg, _ := os.Create("new1235.png")
+	defer toimg.Close()
 
-  png.Encode(toimg, m)
+	png.Encode(toimg, m)
 }
