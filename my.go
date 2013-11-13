@@ -147,19 +147,19 @@ func flame(width, height, iters int, usefuncs []int) *image.RGBA {
     x, y = funcs[rand.Intn(len(funcs))](x, y, a, b, c, d, e, f)
     // I should probably refactor this
     if x < -1 {
-      x = -1
+      // x = -1
       continue
     }
     if x > 1 {
-      x = 1
+      // x = 1
       continue
     }
     if y < -1 {
-      y = -1
+      // y = -1
       continue
     }
     if y > 1 {
-      y = 1
+      // y = 1
       continue
     }
     //fmt.Println("after", x,y)
@@ -183,7 +183,7 @@ func flame(width, height, iters int, usefuncs []int) *image.RGBA {
 
 func writeit(w, h, i int, use []int) {
   m := flame(w, h, i, use)
-  name := "smallish-"
+  name := "nolimit-"
   num := ""
   for _, z := range use {
     num = strconv.Itoa(z) + num
