@@ -2,6 +2,8 @@ package main
 
 import (
 	"os"
+	"fmt"
+	"strconv"
 	"image"
 	"image/png"
 	"image/color"
@@ -35,20 +37,56 @@ func f5(x, y, a, b, c, d, e, f float64) (float64, float64) {
 }
 
 // get the third-largest value in a matrix. I can probably do this better
-func maxmx(arr [][]int) int {
+func equalize(values int, arr [][]int) [][]int {
 	mx := 0
-	snd := 0
-	thrd := 0
+	total := len(arr) * len(arr[0])
 	for _, row := range arr {
 		for _, v := range row {
 			if mx < v {
-				thrd = snd
-				snd = mx
 				mx = v
 			}
 		}
 	}
-	return thrd
+	hist := make([]int, mx + 1)
+	for _, row := range arr {
+		for _, v := range row {
+			hist[v] += 1
+		}
+	}
+	min := 0
+	max := 0
+	top := int(float64(total) * .9995)
+	bottom := int(float64(total) * .0005)
+	count := 0
+	// fmt.Printf("Eq", mx, total, top, bottom)
+	// fmt.Printf("Hist", hist)
+	for i, n := range hist {
+	  count += n
+	  if count > bottom && min == 0 {
+		 min = i
+	  }
+	  if count > top {
+		 max = i
+		 break
+	  }
+   }
+	// fmt.Printf("Eq", mx, total, min, max)
+   for i := range arr {
+	  for j := range arr[i] {
+	    if max == min {
+	       arr[i][j] = 0
+	       continue
+	    }
+		 if arr[i][j] > max {
+			arr[i][j] = max
+		 }
+		 if arr[i][j] < min {
+			arr[i][j] = min
+		 }
+		 arr[i][j] = values * (arr[i][j] - min) / (max - min)
+	  }
+   }
+   return arr
 }
 
 /*
@@ -60,7 +98,7 @@ iterate {
 }
 */
 
-func flame(width, height, iters int) *image.RGBA {
+func flame(width, height, iters int, usefuncs []int) *image.RGBA {
 	x := rand.Float64()*2 - 1
 	y := rand.Float64()*2 - 1
 	mx := make([][]int, height)
@@ -74,7 +112,11 @@ func flame(width, height, iters int) *image.RGBA {
 	// these are our parameters
 	a, b, c, d, e, f = 1, 2, 1, 1, 4, 5
 	// and the F_i s that we'll be using
-	funcs := []func(float64, float64, float64, float64, float64, float64, float64, float64) (float64, float64){f1, f2, f3, f5}
+	allfuncs := []func(float64, float64, float64, float64, float64, float64, float64, float64) (float64, float64){f0, f1, f2, f3, f4, f5}
+	funcs := make([]func(float64, float64, float64, float64, float64, float64, float64, float64) (float64, float64), len(usefuncs))
+	for i, v := range(usefuncs) {
+	  funcs[i] = allfuncs[v]
+    }
 	for at := 0; at < iters; at++ {
 		x, y = funcs[rand.Intn(len(funcs))](x, y, a, b, c, d, e, f)
 		// I should probably refactor this
@@ -101,25 +143,53 @@ func flame(width, height, iters int) *image.RGBA {
 		// refactor, make more readable
 		mx[int((y+1)/2*float64(height-1))][int((x+1)/2*float64(width-1))] += 1
 	}
-	max := maxmx(mx)
+	mx = equalize(255, mx)
 	m := image.NewRGBA(image.Rect(0, 0, width, height))
 	// now write the values to an image, equalized by the 3rd-brightest point
 	for x, row := range mx {
 		for y, v := range row {
-			val := uint8(255 * v / max)
-			if val > 255 {
-				val = 255
-			}
+			val := uint8(v)
 			m.Set(x, y, color.RGBA{val, val * 100 / 255, val, 255})
 		}
 	}
 	return m
 }
 
-func main() {
-	m := flame(800, 800, 10000000)
-	toimg, _ := os.Create("new1235.png")
+func writeit(w, h, i int, use []int) {
+	m := flame(w, h, i, use)
+	name := "new-lg-"
+	for _, z := range use {
+	  name += strconv.Itoa(z)
+    }
+	toimg, _ := os.Create(name + ".png")
 	defer toimg.Close()
 
 	png.Encode(toimg, m)
+}
+
+func main() {
+   w := 1600
+   h := 1600
+   i := 10000000
+   all := 2*2*2*2*2*2
+   for z := 2; z < all/2; z++ {
+	  n := 0
+	  for s := z; s > 0; s >>= 1 {
+		 if s % 2 == 1 {
+			n += 1
+		 }
+	  }
+	  use := make([]int, n)
+	  n = 0
+	  a := 0
+	  for s := z; s > 0; s >>= 1 {
+		 if s % 2 == 1 {
+			use[n] = a
+			n += 1
+		 }
+		 a += 1
+	  }
+	  fmt.Println("Yeah", z, n, use)
+	  writeit(w, h, i, use)
+   }
 }
