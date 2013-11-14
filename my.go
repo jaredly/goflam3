@@ -11,6 +11,8 @@ import (
   "math/rand"
 )
 
+type Variant func(float64, float64, float64, float64, float64, float64, float64, float64) (float64, float64)
+
 // Our functions 
 func f0(x, y, a, b, c, d, e, f float64) (float64, float64) {
   return x / 2, y / 2
@@ -60,6 +62,14 @@ func f10(x, y, a, b, c, d, e, f float64) (float64, float64) {
   one := a*x+b*y+c
   two := d*x + e*y + f
   return math.Sin(one) * math.Cos(one), math.Sin(two) * math.Cos(two)
+}
+
+func f11(x, y, a, b, c, d, e, f float64) (float64, float64) {
+  a = -1.8
+  b = -2.0
+  c = -0.5
+  d = -0.9
+  return math.Sin(a * y) + c*math.Cos(a*x), math.Sin(b*x)+d*math.Cos(b*y)
 }
 
 // get the third-largest value in a matrix. I can probably do this better
@@ -137,9 +147,9 @@ func flame(width, height, iters int, usefuncs []int) *image.RGBA {
   var a, b, c, d, e, f float64
   // these are our parameters
   a, b, c, d, e, f = 1, 2, 1, 1, 4, 5
-  allfuncs := [11]func(float64, float64, float64, float64, float64, float64, float64, float64) (float64, float64){f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10}
+  allfuncs := []Variant{f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11}
   // and the F_i s that we'll be using
-  funcs := make([]func(float64, float64, float64, float64, float64, float64, float64, float64) (float64, float64), len(usefuncs))
+  funcs := make([]Variant, len(usefuncs))
   for i, v := range(usefuncs) {
     funcs[i] = allfuncs[v]
   }
@@ -194,12 +204,10 @@ func writeit(w, h, i int, use []int) {
   png.Encode(toimg, m)
 }
 
-func main() {
-  w := 400
-  h := 400
-  i := 1000000
-  all := int(math.Pow(2, 11))
-  for z := all/4; z < all; z++ {
+func callThemAll(w, h, i, from, to int) {
+  from = int(math.Pow(2, float64(from))) - 1
+  to = int(math.Pow(2, float64(to)))
+  for z := from; z < to; z++ {
     n := 0
     for s := z; s > 0; s >>= 1 {
       if s % 2 == 1 {
@@ -219,4 +227,12 @@ func main() {
     fmt.Println("Yeah", use)
     writeit(w, h, i, use)
   }
+}
+
+func main() {
+  w := 800
+  h := 800
+  i := 10000000
+  writeit(w, h, i, []int{7,3})
+  // callThemAll(w, h, i, 3, 12)
 }
