@@ -67,7 +67,10 @@ func equalize(values int, arr [][]int) [][]int {
   mx := 0
   total := len(arr) * len(arr[0])
   for _, row := range arr {
-    for _, v := range row {
+    for x, v := range row {
+      if v > 0 {
+        row[x] = int(math.Log(float64(row[x])))
+      }
       if mx < v {
 	mx = v
       }
@@ -82,7 +85,7 @@ func equalize(values int, arr [][]int) [][]int {
   min := 0
   max := 0
   top := int(float64(total) * .9995)
-  bottom := int(float64(total) * .0005)
+  bottom := 0//int(float64(total) * .0005)
   count := 0
   // fmt.Printf("Eq", mx, total, top, bottom)
   // fmt.Printf("Hist", hist)
@@ -194,12 +197,9 @@ func writeit(w, h, i int, use []int) {
   png.Encode(toimg, m)
 }
 
-func main() {
-  w := 400
-  h := 400
-  i := 1000000
-  all := int(math.Pow(2, 11))
-  for z := all/4; z < all; z++ {
+func allCombos(w, h, i, upto int) {
+  all := int(math.Pow(2, float64(upto)))
+  for z := 7; z < all; z++ {
     n := 0
     for s := z; s > 0; s >>= 1 {
       if s % 2 == 1 {
@@ -219,4 +219,12 @@ func main() {
     fmt.Println("Yeah", use)
     writeit(w, h, i, use)
   }
+}
+
+func main() {
+  w := 400
+  h := 400
+  i := 10000000
+  allCombos(w, h, i, 7)
+  /// writeit(w, h, i, []int{3,5})
 }
