@@ -63,7 +63,7 @@ func f10(x, y, a, b, c, d, e, f float64) (float64, float64) {
 }
 
 // get the third-largest value in a matrix. I can probably do this better
-func equalize(values int, arr [][]int) [][]int {
+func equalize(values int, arr [][]int, maxp, minp float64) [][]int {
   mx := 0
   total := len(arr) * len(arr[0])
   for _, row := range arr {
@@ -81,8 +81,8 @@ func equalize(values int, arr [][]int) [][]int {
   }
   min := 0
   max := 0
-  top := int(float64(total) * .9995)
-  bottom := int(float64(total) * .0005)
+  top := int(float64(total) * maxp)
+  bottom := int(float64(total) * minp)
   count := 0
   // fmt.Printf("Eq", mx, total, top, bottom)
   // fmt.Printf("Hist", hist)
@@ -124,9 +124,48 @@ func equalize(values int, arr [][]int) [][]int {
   }
 */
 
+type Point struct {
+  x, y float64
+}
+
 func flame(width, height, iters int, usefuncs []int) *image.RGBA {
   x := rand.Float64()*2 - 1
   y := rand.Float64()*2 - 1
+  data := make([]Point, iters)
+    // refactor, make more readable
+  var a, b, c, d, e, f float64
+  // these are our parameters
+  a, b, c, d, e, f = 1, 2, 1, 1, 4, 5
+  allfuncs := [11]func(float64, float64,
+                       float64, float64, float64,
+                       float64, float64, float64) (float64, float64) {
+                         f0, f1, f2, f3, f4,
+                         f5, f6, f7, f8, f9, f10}
+  // and the F_i s that we'll be using
+  funcs := make([]func(float64, float64,
+                       float64, float64, float64,
+                       float64, float64, float64) (float64, float64),
+                len(usefuncs))
+  for i, v := range(usefuncs) {
+    funcs[i] = allfuncs[v]
+  }
+  for at := 0; at < iters; at++ {
+    x, y = funcs[rand.Intn(len(funcs))](x, y, a, b, c, d, e, f)
+    /*
+    // I should probably refactor this
+    if x < -1 || x > 1 || y < -1 || y > 1 {
+      continue
+    }
+    */
+    //fmt.Println("after", x,y)
+    if at < 20 {
+      continue
+    }
+    data[at] = Point{x, y}
+    // mx[int((y+1)/2*float64(height-1))][int((x+1)/2*float64(width-1))] += 1
+  }
+  fmt.Println("Render")
+  // now render
   mx := make([][]int, height)
   for y := range mx {
     mx[y] = make([]int, width)
@@ -134,42 +173,10 @@ func flame(width, height, iters int, usefuncs []int) *image.RGBA {
       mx[y][x] = 0
     }
   }
-  var a, b, c, d, e, f float64
-  // these are our parameters
-  a, b, c, d, e, f = 1, 2, 1, 1, 4, 5
-  allfuncs := [11]func(float64, float64, float64, float64, float64, float64, float64, float64) (float64, float64){f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10}
-  // and the F_i s that we'll be using
-  funcs := make([]func(float64, float64, float64, float64, float64, float64, float64, float64) (float64, float64), len(usefuncs))
-  for i, v := range(usefuncs) {
-    funcs[i] = allfuncs[v]
+  for _, v := range data {
+    mx[int((v.y+1)/2*float64(height-1))][int((v.x+1)/2*float64(width-1))] += 1
   }
-  for at := 0; at < iters; at++ {
-    x, y = funcs[rand.Intn(len(funcs))](x, y, a, b, c, d, e, f)
-    // I should probably refactor this
-    if x < -1 {
-      x = -1
-      continue
-    }
-    if x > 1 {
-      x = 1
-      continue
-    }
-    if y < -1 {
-      y = -1
-      continue
-    }
-    if y > 1 {
-      y = 1
-      continue
-    }
-    //fmt.Println("after", x,y)
-    if at < 20 {
-      continue
-    }
-    // refactor, make more readable
-    mx[int((y+1)/2*float64(height-1))][int((x+1)/2*float64(width-1))] += 1
-  }
-  mx = equalize(255, mx)
+  mx = equalize(255, mx, .995, .0005)
   m := image.NewRGBA(image.Rect(0, 0, width, height))
   // now write the values to an image, equalized by the 3rd-brightest point
   for x, row := range mx {
@@ -198,7 +205,10 @@ func main() {
   w := 400
   h := 400
   i := 1000000
-  all := int(math.Pow(2, 11))
+  //all := int(math.Pow(2, 11))
+  fmt.Println("Generating")
+  writeit(w, h, i, []int{7,6,5})
+  /*
   for z := all/4; z < all; z++ {
     n := 0
     for s := z; s > 0; s >>= 1 {
@@ -219,4 +229,5 @@ func main() {
     fmt.Println("Yeah", use)
     writeit(w, h, i, use)
   }
+  */
 }
