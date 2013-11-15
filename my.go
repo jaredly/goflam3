@@ -77,7 +77,10 @@ func equalize(values int, arr [][]int) [][]int {
   mx := 0
   total := len(arr) * len(arr[0])
   for _, row := range arr {
-    for _, v := range row {
+    for x, v := range row {
+      if v > 0 {
+        row[x] = int(math.Log(float64(row[x])))
+      }
       if mx < v {
 	mx = v
       }
@@ -92,7 +95,7 @@ func equalize(values int, arr [][]int) [][]int {
   min := 0
   max := 0
   top := int(float64(total) * .9995)
-  bottom := int(float64(total) * .0005)
+  bottom := 0//int(float64(total) * .0005)
   count := 0
   // fmt.Printf("Eq", mx, total, top, bottom)
   // fmt.Printf("Hist", hist)
@@ -234,5 +237,6 @@ func main() {
   h := 800
   i := 10000000
   writeit(w, h, i, []int{7,3})
+  // writeit(w, h, i, []int{3,5})
   // callThemAll(w, h, i, 3, 12)
 }
