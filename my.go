@@ -9,9 +9,10 @@ import (
   "image/color"
   "math"
   "math/rand"
+  "time"
 )
 
-type Variant func(float64, float64, float64, float64, float64, float64, float64, float64) (float64, float64)
+type Variation func(float64, float64, float64, float64, float64, float64, float64, float64) (float64, float64)
 
 // Our functions 
 func f0(x, y, a, b, c, d, e, f float64) (float64, float64) {
@@ -70,32 +71,78 @@ func f11(x, y, a, b, c, d, e, f float64) (float64, float64) {
   c = -0.5
   d = -0.9
   return math.Sin(a * y) + c*math.Cos(a*x), math.Sin(b*x)+d*math.Cos(b*y)
+/*
+  (x, y) = a random point in the biunit square
+  iterate {
+  i = a random integer from 0 to n  1 inclusive
+  (x, y) = Fi(x, y)
+  plot (x, y) except during the first 20 iterations
+*/
+}
+
+type Point struct {
+  x, y float64
+}
+
+func flame(width, height, iters int, usefuncs []int) *image.RGBA {
+  start := time.Now()
+  allfuncs := []Variation{f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10}
+
+  fmt.Println("Flaming")
+  data := generate(iters, usefuncs, allfuncs)
+  fmt.Println("Generate time", time.Since(start).String())
+
+  other := time.Now()
+  image := render(width, height, data)
+  fmt.Println("Render time", time.Since(other).String())
+  return image
+}
+
+func generate(iters int, usefuncs []int, variations []Variation) *[]Point {
+  x := rand.Float64()*2 - 1
+  y := rand.Float64()*2 - 1
+  data := make([]Point, iters)
+  // should these be passed in as an array?
+  var a, b, c, d, e, f float64
+  // these are our parameters
+  a, b, c, d, e, f = 1, 2, 1, 1, 4, 5
+  // and the F_i s that we'll be using
+  for at := 0; at < iters; at++ {
+    fi := rand.Intn(len(usefuncs))
+    x, y = variations[usefuncs[fi]](x, y, a, b, c, d, e, f)
+    if at < 20 {
+      continue
+    }
+    data[at] = Point{x, y}
+  }
+  return &data
 }
 
 // get the third-largest value in a matrix. I can probably do this better
-func equalize(values int, arr [][]int) [][]int {
+func equalize(arr *[][]float64, values int, maxp, minp float64) {
   mx := 0
-  total := len(arr) * len(arr[0])
-  for _, row := range arr {
+  total := len(*arr) * len(arr[0])
+  for _, row := range *arr {
     for x, v := range row {
       if v > 0 {
-        row[x] = int(math.Log(float64(row[x])))
+        row[x] = math.Log(v)/v
       }
       if mx < v {
 	mx = v
       }
     }
   }
-  hist := make([]int, mx + 1)
+  by := 255 * 10
+  hist := make([]int, by + 1)
   for _, row := range arr {
     for _, v := range row {
-      hist[v] += 1
+      hist[int(v * by / mx)] += 1
     }
   }
   min := 0
   max := 0
-  top := int(float64(total) * .9995)
-  bottom := 0//int(float64(total) * .0005)
+  top := int(float64(total) * maxp)
+  bottom := int(float64(total) * minp)
   count := 0
   // fmt.Printf("Eq", mx, total, top, bottom)
   // fmt.Printf("Hist", hist)
@@ -116,82 +163,43 @@ func equalize(values int, arr [][]int) [][]int {
 	arr[i][j] = 0
 	continue
       }
-      if arr[i][j] > max {
+      v := arr[i][j] * by / mx
+      if v > max {
 	arr[i][j] = max
       }
-      if arr[i][j] < min {
+      if v < min {
 	arr[i][j] = min
       }
-      arr[i][j] = values * (arr[i][j] - min) / (max - min)
+      arr[i][j] = values * (v - min) / (max - min)
     }
   }
   return arr
 }
 
-/*
-  (x, y) = a random point in the biunit square
-  iterate {
-  i = a random integer from 0 to n  1 inclusive
-  (x, y) = Fi(x, y)
-  plot (x, y) except during the first 20 iterations
-  }
-*/
-
-func flame(width, height, iters int, usefuncs []int) *image.RGBA {
-  x := rand.Float64()*2 - 1
-  y := rand.Float64()*2 - 1
-  mx := make([][]int, height)
+// data the data and render it within certain dimentions
+func render(width, height int, data *[]Point) *image.RGBA {
+  fmt.Println("Render")
+  // now render
+  mx := make([][]float64, height)
   for y := range mx {
-    mx[y] = make([]int, width)
+    mx[y] = make([]float64, width)
     for x := range mx[y] {
       mx[y][x] = 0
     }
   }
-  var a, b, c, d, e, f float64
-  // these are our parameters
-  a, b, c, d, e, f = 1, 2, 1, 1, 4, 5
-  allfuncs := []Variant{f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11}
-  // and the F_i s that we'll be using
-  funcs := make([]Variant, len(usefuncs))
-  for i, v := range(usefuncs) {
-    funcs[i] = allfuncs[v]
+  for _, v := range *data {
+    mx[int((v.y+1)/2*float64(height-1))][int((v.x+1)/2*float64(width-1))] += 1
   }
-  for at := 0; at < iters; at++ {
-    x, y = funcs[rand.Intn(len(funcs))](x, y, a, b, c, d, e, f)
-    // I should probably refactor this
-    if x < -1 {
-      // x = -1
-      continue
-    }
-    if x > 1 {
-      // x = 1
-      continue
-    }
-    if y < -1 {
-      // y = -1
-      continue
-    }
-    if y > 1 {
-      // y = 1
-      continue
-    }
-    //fmt.Println("after", x,y)
-    if at < 20 {
-      continue
-    }
-    // refactor, make more readable
-    mx[int((y+1)/2*float64(height-1))][int((x+1)/2*float64(width-1))] += 1
-  }
-  mx = equalize(255, mx)
-  m := image.NewRGBA(image.Rect(0, 0, width, height))
+  mx = equalize(&mx, 255, .995, .0005)
+  image := image.NewRGBA(image.Rect(0, 0, width, height))
   // now write the values to an image, equalized by the 3rd-brightest point
   for x, row := range mx {
     for y, v := range row {
       val := uint8(v)
-      m.Set(x, y, color.RGBA{val, val * 100 / 255, val, 255})
+      image.Set(x, y, color.RGBA{val, val * 100 / 255, val, 255})
     }
   }
-  return m
+  return image
 }
 
 func writeit(w, h, i int, use []int) {
@@ -207,7 +215,7 @@ func writeit(w, h, i int, use []int) {
   png.Encode(toimg, m)
 }
 
-func callThemAll(w, h, i, from, to int) {
+func allCombos(w, h, i, from, to int) {
   from = int(math.Pow(2, float64(from))) - 1
   to = int(math.Pow(2, float64(to)))
   for z := from; z < to; z++ {
@@ -239,4 +247,5 @@ func main() {
   writeit(w, h, i, []int{7,3})
   // writeit(w, h, i, []int{3,5})
   // callThemAll(w, h, i, 3, 12)
+  // allCombos(w, h, i, 0, 7)
 }
