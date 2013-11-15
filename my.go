@@ -71,13 +71,6 @@ func f11(x, y, a, b, c, d, e, f float64) (float64, float64) {
   c = -0.5
   d = -0.9
   return math.Sin(a * y) + c*math.Cos(a*x), math.Sin(b*x)+d*math.Cos(b*y)
-/*
-  (x, y) = a random point in the biunit square
-  iterate {
-  i = a random integer from 0 to n  1 inclusive
-  (x, y) = Fi(x, y)
-  plot (x, y) except during the first 20 iterations
-*/
 }
 
 type Point struct {
@@ -120,8 +113,8 @@ func generate(iters int, usefuncs []int, variations []Variation) *[]Point {
 
 // get the third-largest value in a matrix. I can probably do this better
 func equalize(arr *[][]float64, values int, maxp, minp float64) {
-  mx := 0
-  total := len(*arr) * len(arr[0])
+  mx := 0.0
+  total := len(*arr) * len((*arr)[0])
   for _, row := range *arr {
     for x, v := range row {
       if v > 0 {
@@ -132,9 +125,9 @@ func equalize(arr *[][]float64, values int, maxp, minp float64) {
       }
     }
   }
-  by := 255 * 10
-  hist := make([]int, by + 1)
-  for _, row := range arr {
+  by := 255 * 10.0
+  hist := make([]int, int(by) + 1)
+  for _, row := range *arr {
     for _, v := range row {
       hist[int(v * by / mx)] += 1
     }
@@ -157,23 +150,22 @@ func equalize(arr *[][]float64, values int, maxp, minp float64) {
     }
   }
   // fmt.Printf("Eq", mx, total, min, max)
-  for i := range arr {
-    for j := range arr[i] {
+  for i := range *arr {
+    for j := range (*arr)[i] {
       if max == min {
-	arr[i][j] = 0
+	(*arr)[i][j] = 0
 	continue
       }
-      v := arr[i][j] * by / mx
+      v := int((*arr)[i][j] * by / mx)
       if v > max {
-	arr[i][j] = max
+	(*arr)[i][j] = float64(max)
       }
       if v < min {
-	arr[i][j] = min
+	(*arr)[i][j] = float64(min)
       }
-      arr[i][j] = values * (v - min) / (max - min)
+      (*arr)[i][j] = float64(values * (v - min) / (max - min))
     }
   }
-  return arr
 }
 
 // data the data and render it within certain dimentions
@@ -190,7 +182,7 @@ func render(width, height int, data *[]Point) *image.RGBA {
   for _, v := range *data {
     mx[int((v.y+1)/2*float64(height-1))][int((v.x+1)/2*float64(width-1))] += 1
   }
-  mx = equalize(&mx, 255, .995, .0005)
+  equalize(&mx, 255, .995, .0005)
   image := image.NewRGBA(image.Rect(0, 0, width, height))
   // now write the values to an image, equalized by the 3rd-brightest point
   for x, row := range mx {
