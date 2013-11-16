@@ -112,24 +112,73 @@ func generate(iters int, usefuncs []int, variations []Variation) *[]Point {
 }
 
 // get the third-largest value in a matrix. I can probably do this better
-func equalize(arr *[][]float64, values int, maxp, minp float64) {
-  mx := 0.0
-  total := len(*arr) * len((*arr)[0])
-  for _, row := range *arr {
-    for x, v := range row {
-      if v > 0 {
-        row[x] = math.Log(v)/v
-      }
+func equalize_copy(values int, arr [][]int, maxp, minp float64) [][]int {
+  mx := 0
+  total := len(arr) * len(arr[0])
+  for _, row := range arr {
+    for _, v := range row {
       if mx < v {
-	mx = v
+        mx = v
       }
     }
   }
-  by := 255 * 10.0
-  hist := make([]int, int(by) + 1)
+  hist := make([]int, mx + 1)
+  for _, row := range arr {
+    for _, v := range row {
+      hist[v] += 1
+    }
+  }
+  min := 0
+  max := 0
+  top := int(float64(total) * maxp)
+  bottom := int(float64(total) * minp)
+  count := 0
+  // fmt.Printf("Eq", mx, total, top, bottom)
+  // fmt.Printf("Hist", hist)
+  for i, n := range hist {
+    count += n
+    if count > bottom && min == 0 {
+      min = i
+    }
+    if count > top {
+      max = i
+      break
+    }
+  }
+  // fmt.Printf("Eq", mx, total, min, max)
+  for i := range arr {
+    for j := range arr[i] {
+      if max == min {
+        arr[i][j] = 0
+        continue
+      }
+      if arr[i][j] > max {
+        arr[i][j] = max
+      }
+      if arr[i][j] < min {
+        arr[i][j] = min
+      }
+      arr[i][j] = values * (arr[i][j] - min) / (max - min)
+    }
+  }
+  return arr
+}
+
+// get the third-largest value in a matrix. I can probably do this better
+func equalize(arr *[][]int, values int, maxp, minp float64) {
+  mx := 0
+  total := len(*arr) * len((*arr)[0])
   for _, row := range *arr {
     for _, v := range row {
-      hist[int(v * by / mx)] += 1
+      if mx < v {
+        mx = v
+      }
+    }
+  }
+  hist := make([]int, mx + 1)
+  for _, row := range *arr {
+    for _, v := range row {
+      hist[v] += 1
     }
   }
   min := 0
@@ -153,6 +202,78 @@ func equalize(arr *[][]float64, values int, maxp, minp float64) {
   for i := range *arr {
     for j := range (*arr)[i] {
       if max == min {
+        (*arr)[i][j] = 0
+        continue
+      }
+      if (*arr)[i][j] > max {
+        (*arr)[i][j] = max
+      }
+      if (*arr)[i][j] < min {
+        (*arr)[i][j] = min
+      }
+      (*arr)[i][j] = values * ((*arr)[i][j] - min) / (max - min)
+    }
+  }
+}
+
+func find_max(mx *[][]float64) float64 {
+  max := 0.0
+  for y := range *mx {
+    for x, v := range (*mx)[y] {
+      if v > 0 {
+        (*mx)[y][x] = math.Log(v)/v
+      }
+      if max < v {
+	max = v
+      }
+    }
+  }
+  return max
+}
+
+func make_histogram(mx *[][]float64, by float64, max float64) *[]int {
+  hist := make([]int, int(by) + 1)
+  for y := range *mx {
+    for x := range (*mx)[y] {
+      hist[int((*mx)[y][x] * by / max)] += 1
+    }
+  }
+  return &hist
+}
+
+func get_max_min(hist *[]int, total int, maxp, minp float64) (int, int) {
+  min := 0
+  max := 0
+  top := int(float64(total) * maxp)
+  bottom := int(float64(total) * minp)
+  count := 0
+  // fmt.Printf("Eq", mx, total, top, bottom)
+  // fmt.Printf("Hist", hist)
+  for i, n := range *hist {
+    count += n
+    if count > bottom && min == 0 {
+      min = i
+    }
+    if count > top {
+      max = i
+      break
+    }
+  }
+  return max, min
+}
+
+// get the third-largest value in a matrix. I can probably do this better
+func equalize_log(arr *[][]float64, values int, maxp, minp float64) {
+  mx := find_max(arr)
+
+  by := 255 * 10.0
+  total := len(*arr) * len((*arr)[0])
+  hist := make_histogram(arr, by, mx)
+  max, min := get_max_min(hist, total, maxp, minp)
+  // fmt.Printf("Eq", mx, total, min, max)
+  for i := range *arr {
+    for j := range (*arr)[i] {
+      if max == min {
 	(*arr)[i][j] = 0
 	continue
       }
@@ -172,9 +293,9 @@ func equalize(arr *[][]float64, values int, maxp, minp float64) {
 func render(width, height int, data *[]Point) *image.RGBA {
   fmt.Println("Render")
   // now render
-  mx := make([][]float64, height)
+  mx := make([][]int, height)
   for y := range mx {
-    mx[y] = make([]float64, width)
+    mx[y] = make([]int, width)
     for x := range mx[y] {
       mx[y][x] = 0
     }
