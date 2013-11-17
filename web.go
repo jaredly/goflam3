@@ -168,5 +168,5 @@ func cliWebserver(c *cli.Context) {
 		}))
 	})
 	w.Config.StaticDir = "public"
-	w.Run("localhost:" + os.Getenv("PORT"))
+	w.Run("0.0.0.0:" + os.Getenv("PORT"))
 }
