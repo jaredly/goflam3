@@ -7,7 +7,25 @@ import (
 type Variation func(float64, float64, float64, float64, float64, float64, float64, float64) (float64, float64)
 
 func AllVariations() []Variation {
-	return []Variation{f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11}
+	return []Variation{f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13}
+}
+
+func Explanation() []string {
+	return []string{
+		"x/2, y/2",
+		"(x+1)/2, y/2",
+		"x/2, (y+1)/2",
+		"sin(x), sin(y)",
+		"cos(x), cos(y)",
+		"cos(ax+by+c), cos(dx+ey+f)",
+		"sin(ax+by+c), cos(dx+ey+f)",
+		"sin2(ax+by+c), sin2(dx+ey+f)",
+		"cos2(ax+by+c), cos2(dx+ey+f)",
+		"sin.cos(ax+by+c), sin.cos(dx+ey+f)",
+		"magic",
+		"(x-1)/2, y/2",
+		"e^x, e^y",
+	}
 }
 
 // Our functions 
@@ -68,4 +86,13 @@ func f11(x, y, a, b, c, d, e, f float64) (float64, float64) {
 	d = -0.9
 	return math.Sin(a * y) + c*math.Cos(a*x), math.Sin(b*x)+d*math.Cos(b*y)
 }
+
+func f12(x, y, a, b, c, d, e, f float64) (float64, float64) {
+	return (x-1)/2, y/2
+}
+
+func f13(x, y, a, b, c, d, e, f float64) (float64, float64) {
+	return math.Exp(x), math.Exp(y)
+}
+
 

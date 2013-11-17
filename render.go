@@ -4,7 +4,32 @@ import (
 	"math"
   "image"
 	"image/color"
+	"strconv"
 )
+
+func printMx(mx *[][]int) {
+	println("Year", len(*mx), len((*mx)[0]))
+	for _, row := range *mx {
+		s := ""
+		for _, v := range row {
+			s += strconv.Itoa(v) + " "
+		}
+		println(s)
+	}
+}
+
+func renderMatrix(matrix *[][]Pixel) *image.RGBA {
+	height := len(*matrix)
+	width := len((*matrix)[0])
+	mx := make([][]int, len(*matrix))
+	for y := range mx {
+		mx[y] = make([]int, width)
+		for x := range mx[y] {
+			mx[y][x] = int((*matrix)[y][x].Alpha)
+		}
+	}
+	return matrixToImage(&mx, width, height)
+}
 
 // data the data and render it within certain dimentions
 func render(width, height int, data *[]Point) *image.RGBA {
@@ -12,17 +37,18 @@ func render(width, height int, data *[]Point) *image.RGBA {
 	mx := make([][]int, height)
 	for y := range mx {
 		mx[y] = make([]int, width)
-		for x := range mx[y] {
-			mx[y][x] = 0
-		}
 	}
 	for _, v := range *data {
 		mx[int((v.Y+1)/2*float64(height-1))][int((v.X+1)/2*float64(width-1))] += 1
 	}
-	equalize(&mx, 255, .995, .0005)
+	return matrixToImage(&mx, width, height)
+}
+
+func matrixToImage(mx *[][]int, width, height int) *image.RGBA {
+	equalize(mx, 255, .995, .0005)
 	image := image.NewRGBA(image.Rect(0, 0, width, height))
 	// now write the values to an image, equalized by the 3rd-brightest point
-	for x, row := range mx {
+	for x, row := range *mx {
 		for y, v := range row {
 			val := uint8(v)
 			image.Set(x, y, color.RGBA{val, val * 100 / 255, val, 255})
@@ -182,29 +208,32 @@ func get_max_min(hist *[]int, total int, maxp, minp float64) (int, int) {
 	return max, min
 }
 
-// get the third-largest value in a matrix. I can probably do this better
-func equalize_log(arr *[][]float64, values int, maxp, minp float64) {
-	mx := find_max(arr)
+func equalize_log(irr *[][]int, values int, maxp, minp float64) {
+	arr := make([][]float64, len(*irr))
+	for x := range arr {
+		arr[x] = make([]float64, len((*irr)[0]))
+	}
+	mx := find_max(&arr)
 
 	by := 255 * 10.0
-	total := len(*arr) * len((*arr)[0])
-	hist := make_histogram(arr, by, mx)
+	total := len(arr) * len((arr)[0])
+	hist := make_histogram(&arr, by, mx)
 	max, min := get_max_min(hist, total, maxp, minp)
 	// fmt.Printf("Eq", mx, total, min, max)
-	for i := range *arr {
-		for j := range (*arr)[i] {
+	for i := range arr {
+		for j := range (arr)[i] {
 			if max == min {
-				(*arr)[i][j] = 0
+				(arr)[i][j] = 0
 				continue
 			}
-			v := int((*arr)[i][j] * by / mx)
+			v := int((arr)[i][j] * by / mx)
 			if v > max {
-				(*arr)[i][j] = float64(max)
+				v = max
 			}
 			if v < min {
-				(*arr)[i][j] = float64(min)
+				v = min
 			}
-			(*arr)[i][j] = float64(values * (v - min) / (max - min))
+			(*irr)[i][j] = int(values * (v - min) / (max - min))
 		}
 	}
 }
