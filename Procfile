@@ -1,1 +1,1 @@
-web: goflam3
+web: goflam3 serve
