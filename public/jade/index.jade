@@ -1,0 +1,35 @@
+!!!
+html
+  head
+    // bootstrap theme
+    link(rel='stylesheet', href='bootstrap/css/bootstrap.css')
+
+    // non-component javascript libs
+    script(src='js/angular.js')
+
+    // my actual code
+    link(rel='stylesheet', href='css/index.css')
+    script(src='js/index.js')
+    script.
+      window.addEventListener('load', function () {
+        require('prototype')(document)
+      })
+  body
+    div#main(ng-controller="MainController")
+      h3.title Fractal Flames
+      .high-back(ng-show="showingHD", ng-click="hideHD()")
+        img(ng-src="{{ HighDef }}")
+      #content
+        .left-side
+          .main-image(ng-click="showHD()")
+            img(ng-src="{{ MainImage }}")
+          ul.formulas
+            li(ng-repeat="func in MainFormulas") {{ Formulas[func.Num].Text }}
+        .child-images
+          .children
+            .child(ng-repeat="fractal in ChildImages", ng-click="useChild(fractal)")
+              img(ng-src="{{ fractal.Image }}")
+              span.formula {{ fractal.Text }}
+              span.checked(ng-hide="fractal.Disabled")
+                i.glyphicon.glyphicon-ok
+    

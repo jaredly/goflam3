@@ -1,0 +1,73 @@
+body
+
+  #main
+    display: flex
+    flex-direction: column
+  
+  h3.title
+    margin: 0
+    padding: 20px
+    text-align: center
+    background-color: #7C00AC
+    font-weight: bold
+    font-size: 35px
+    color: white
+  
+  #content
+    display: flex
+    flex-direction: row
+    flex: 1
+    
+  
+  .left-side
+    padding: 20px
+
+    .main-image
+      cursor: pointer
+    
+    .formulas
+      list-style: none
+      margin: 20px 0
+      padding: 0
+      font-weight: bold
+      font-size: 24px
+      
+      li
+        padding: 5px 15px
+
+  .high-back
+    padding: 50px
+    position: fixed
+    cursor: pointer
+    top: 0
+    left: 0
+    right: 0
+    bottom: 0
+    overflow: auto
+    background-color: rgba(50, 50, 50, .5)
+    text-align: center
+    z-index: 100
+  
+  .child-images
+    padding: 20px 0
+    text-align: left
+    flex: 1
+    
+    .children
+      .child
+        padding: 5px
+        margin-right: 15px
+        cursor: pointer
+        min-width: 700px
+        float: left
+  
+        &:hover
+          background-color: #ccc
+        
+        .formula
+          padding: 0 10px 0 30px
+          font-size: 30px
+        
+        .checked
+          color: green
+          font-size: 20px
