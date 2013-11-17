@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+        "os"
 	"strings"
 	"strconv"
 	"image/png"
@@ -167,5 +168,5 @@ func cliWebserver(c *cli.Context) {
 		}))
 	})
 	w.Config.StaticDir = "public"
-	w.Run("localhost:3000")
+	w.Run("localhost:" + os.Getenv("PORT"))
 }
