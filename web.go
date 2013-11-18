@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+        "os"
 	"strings"
 	"strconv"
 	"image/png"
@@ -41,12 +42,12 @@ type InitialResponse struct {
 }
 
 func GetWebFuncs() []WebFunc {
-	exp := Explanation()
+	exp := AllVariations()
 	res := make([]WebFunc, len(exp))
 	for i := range res {
 		res[i] = WebFunc{
 			Num: i,
-			Text: exp[i],
+			Text: exp[i].Text,
 		}
 	}
 	return res
@@ -71,7 +72,7 @@ func usingToFuns(using []bool) []FunConfig {
 }
 
 func RenderChildren(width, height, iterations int, funs []FunConfig) []WebRender {
-	texts := Explanation()
+	texts := AllVariations()
 	variations := len(texts)
 	res := make([]WebRender, variations)
 	using := make([]bool, variations)
@@ -95,7 +96,7 @@ func RenderChildren(width, height, iterations int, funs []FunConfig) []WebRender
 			Disabled: using[i],
 			Time: time.Since(start),
 			Formulas: funs,
-			Text: texts[i],
+			Text: texts[i].Text,
 		}
 		using[i] = !using[i]
 	}
@@ -167,5 +168,5 @@ func cliWebserver(c *cli.Context) {
 		}))
 	})
 	w.Config.StaticDir = "public"
-	w.Run("localhost:3000")
+	w.Run("0.0.0.0:" + os.Getenv("PORT"))
 }
