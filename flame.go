@@ -1,16 +1,16 @@
 package main
 
 import (
-  "os"
-  "fmt"
-  "image"
 	bin "encoding/binary"
-  "math/rand"
-  "time"
+	"fmt"
+	"image"
+	"math/rand"
+	"os"
+	"time"
 )
 
 type Point struct {
-  X, Y float64
+	X, Y float64
 }
 
 /*
@@ -20,7 +20,7 @@ func loadData(fname string) *[]Point {
 		return nil
 	}
 	defer file.Close()
-	var num, i int32
+	var num, i int64
 	bin.Read(file, bin.LittleEndian, &num)
 	data := make([]Point, num)
 	for i=0; i<num; i++ {
@@ -39,7 +39,7 @@ func storeData(fname string, data *[]Point) {
 	defer file.Close()
 	num := len(*data)
 	// println("Number to save :", num)
-	bin.Write(file, bin.LittleEndian, int32(num))
+	bin.Write(file, bin.LittleEndian, int64(num))
 	for _, v := range *data {
 		bin.Write(file, bin.LittleEndian, &v)
 	}
@@ -106,7 +106,7 @@ func altFlame(config Config) *image.RGBA {
 	start := time.Now()
 	allfuncs := AllVariations()
 
-	fmt.Fprintln(os.Stderr, "Flaming")
+	fmt.Fprintln(os.Stderr, "Flaming", config.Functions)
 	var data *[][]Pixel
 	if config.DataIn != "" {
 		fmt.Fprintln(os.Stderr, "From data")
@@ -138,14 +138,14 @@ func altFlame(config Config) *image.RGBA {
 }
 
 type Pixel struct {
-	Alpha int32
-	Funcs [20]int32
+	Alpha int64
+	Funcs [20]int64
 }
 
 func genMatrix(iters, width, height int, usefuncs []FunConfig, variations []FullVar) *[][]Pixel {
 	x := rand.Float64()*2 - 1
 	y := rand.Float64()*2 - 1
-	raw := make([]Pixel, height * width)
+	raw := make([]Pixel, height*width)
 	mx := make([][]Pixel, height)
 	for i := range mx {
 		mx[i], raw = raw[:width], raw[width:]
@@ -166,11 +166,17 @@ func genMatrix(iters, width, height int, usefuncs []FunConfig, variations []Full
 		}
 		tx := int((x + 1) * float64(width) / 2)
 		if tx == width {
-			tx = width -1
+			tx = width - 1
 		}
 		ty := int((y + 1) * float64(height) / 2)
 		if ty == height {
 			ty = height - 1
+		}
+		if ty < 0 {
+			continue
+		}
+		if tx < 0 {
+			continue
 		}
 		mx[ty][tx].Alpha += 1
 		mx[ty][tx].Funcs[fi] += 1
@@ -187,9 +193,9 @@ func saveMatrix(fname string, matrix *[][]Pixel) {
 	}
 	defer file.Close()
 	// height
-	bin.Write(file, bin.LittleEndian, int32(len(*matrix)))
+	bin.Write(file, bin.LittleEndian, int64(len(*matrix)))
 	// width
-	bin.Write(file, bin.LittleEndian, int32(len((*matrix)[0])))
+	bin.Write(file, bin.LittleEndian, int64(len((*matrix)[0])))
 	for y := range *matrix {
 		for x := range (*matrix)[y] {
 			bin.Write(file, bin.LittleEndian, (*matrix)[y][x])
@@ -203,10 +209,10 @@ func loadMatrix(fname string) *[][]Pixel {
 		return nil
 	}
 	defer file.Close()
-	var height, width int32
+	var height, width int64
 	bin.Read(file, bin.LittleEndian, &height)
 	bin.Read(file, bin.LittleEndian, &width)
-	raw := make([]Pixel, height * width)
+	raw := make([]Pixel, height*width)
 	matrix := make([][]Pixel, height)
 	for i := range matrix {
 		matrix[i], raw = raw[:width], raw[width:]

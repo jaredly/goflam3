@@ -1,9 +1,9 @@
 package main
 
 import (
-	"math"
-  "image"
+	"image"
 	"image/color"
+	"math"
 	"strconv"
 )
 
@@ -68,7 +68,7 @@ func equalize_copy(values int, arr [][]int, maxp, minp float64) [][]int {
 			}
 		}
 	}
-	hist := make([]int, mx + 1)
+	hist := make([]int, mx+1)
 	for _, row := range arr {
 		for _, v := range row {
 			hist[v] += 1
@@ -121,7 +121,7 @@ func equalize(arr *[][]int, values int, maxp, minp float64) {
 			}
 		}
 	}
-	hist := make([]int, mx + 1)
+	hist := make([]int, mx+1)
 	for _, row := range *arr {
 		for _, v := range row {
 			hist[v] += 1
@@ -167,7 +167,7 @@ func find_max(mx *[][]float64) float64 {
 	for y := range *mx {
 		for x, v := range (*mx)[y] {
 			if v > 0 {
-				(*mx)[y][x] = math.Log(v)/v
+				(*mx)[y][x] = math.Log(v) / v
 			}
 			if max < v {
 				max = v
@@ -178,10 +178,10 @@ func find_max(mx *[][]float64) float64 {
 }
 
 func make_histogram(mx *[][]float64, by float64, max float64) *[]int {
-	hist := make([]int, int(by) + 1)
+	hist := make([]int, int(by)+1)
 	for y := range *mx {
 		for x := range (*mx)[y] {
-			hist[int((*mx)[y][x] * by / max)] += 1
+			hist[int((*mx)[y][x]*by/max)] += 1
 		}
 	}
 	return &hist
@@ -237,4 +237,3 @@ func equalize_log(irr *[][]int, values int, maxp, minp float64) {
 		}
 	}
 }
-

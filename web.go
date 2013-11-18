@@ -1,17 +1,17 @@
 package main
 
 import (
-	"fmt"
-        "os"
-	"strings"
-	"strconv"
-	"image/png"
-	"image"
 	"bytes"
-	"encoding/json"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"github.com/codegangsta/cli"
 	"github.com/hoisie/web"
+	"image"
+	"image/png"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -22,22 +22,22 @@ func imageToBase64(image *image.RGBA) string {
 }
 
 type WebRender struct {
-	Image string
-	Time time.Duration
+	Image    string
+	Time     time.Duration
 	Formulas []FunConfig
 	Disabled bool
-	Text string
+	Text     string
 }
 
 type WebFunc struct {
-	Num int
+	Num  int
 	Text string
 }
 
 type InitialResponse struct {
-	MainImage string
-	Formulas []WebFunc
-	ChildImages []WebRender
+	MainImage    string
+	Formulas     []WebFunc
+	ChildImages  []WebRender
 	MainFormulas []FunConfig
 }
 
@@ -46,7 +46,7 @@ func GetWebFuncs() []WebFunc {
 	res := make([]WebFunc, len(exp))
 	for i := range res {
 		res[i] = WebFunc{
-			Num: i,
+			Num:  i,
 			Text: exp[i].Text,
 		}
 	}
@@ -88,15 +88,15 @@ func RenderChildren(width, height, iterations int, funs []FunConfig) []WebRender
 		start := time.Now()
 		res[i] = WebRender{
 			Image: imageToBase64(altFlame(Config{
-				Width: width,
-				Height: height,
+				Width:      width,
+				Height:     height,
 				Iterations: iterations,
-				Functions: funs,
+				Functions:  funs,
 			})),
 			Disabled: using[i],
-			Time: time.Since(start),
+			Time:     time.Since(start),
 			Formulas: funs,
-			Text: texts[i].Text,
+			Text:     texts[i].Text,
 		}
 		using[i] = !using[i]
 	}
@@ -134,14 +134,14 @@ func cliWebserver(c *cli.Context) {
 		}
 		res, _ := json.Marshal(InitialResponse{
 			MainImage: imageToBase64(altFlame(Config{
-				Width: 300,
-				Height: 300,
+				Width:      300,
+				Height:     300,
 				Iterations: 1000 * 1000,
-				Functions: funs,
+				Functions:  funs,
 			})),
 			MainFormulas: funs,
-			Formulas: GetWebFuncs(),
-			ChildImages: RenderChildren(150, 150, 100 * 1000, funs),
+			Formulas:     GetWebFuncs(),
+			ChildImages:  RenderChildren(150, 150, 100*1000, funs),
 		})
 		ctx.SetHeader("Content-Type", "application/json", true)
 		return string(res)
@@ -161,12 +161,16 @@ func cliWebserver(c *cli.Context) {
 			}
 		}
 		return imageToBase64(altFlame(Config{
-			Width: 1000,
-			Height: 1000,
+			Width:      1000,
+			Height:     1000,
 			Iterations: 10 * 1000 * 1000,
-			Functions: funs,
+			Functions:  funs,
 		}))
 	})
 	w.Config.StaticDir = "public"
-	w.Run("0.0.0.0:" + os.Getenv("PORT"))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+	w.Run("0.0.0.0:" + port)
 }

@@ -1,14 +1,14 @@
 package main
 
 import (
-	"os"
-	"io"
-	"io/ioutil"
-	"image"
-	"image/png"
 	"encoding/json"
 	"github.com/codegangsta/cli"
 	"github.com/kless/term"
+	"image"
+	"image/png"
+	"io"
+	"io/ioutil"
+	"os"
 )
 
 type FunConfig struct {
@@ -17,13 +17,13 @@ type FunConfig struct {
 }
 
 type Config struct {
-	Width int
-	Height int
+	Width      int
+	Height     int
 	Iterations int
-	Functions []FunConfig
-	DataIn string
-	DataOut string
-	NoImage bool
+	Functions  []FunConfig
+	DataIn     string
+	DataOut    string
+	NoImage    bool
 	// LogEqualize
 	// GammaCorrect
 }
@@ -86,19 +86,19 @@ func main() {
 	var nofuncs cli.IntSlice
 	app.Commands = []cli.Command{
 		{
-			Name: "serve",
+			Name:      "serve",
 			ShortName: "s",
-			Usage: "Webserver",
-			Flags: []cli.Flag {
+			Usage:     "Webserver",
+			Flags: []cli.Flag{
 				cli.IntFlag{"port", 4000, "The port to run on (defaults to 3000)"},
 			},
 			Action: cliWebserver,
 		},
 		{
-			Name: "render",
+			Name:      "render",
 			ShortName: "r",
-			Usage: "Render a file",
-			Flags: []cli.Flag {
+			Usage:     "Render a file",
+			Flags: []cli.Flag{
 				cli.StringFlag{"dataout", "", "Output generated points to the given path"},
 				cli.StringFlag{"datain", "", "Don't generate points; read them from the given path"},
 				cli.StringFlag{"config", "", "File containing config. Defaults to stdin if no datain is given"},
@@ -139,7 +139,6 @@ func write(outfile string, image *image.RGBA) {
 }
 
 // cliwebserver
-
 
 /*
 func main() {
