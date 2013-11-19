@@ -21,6 +21,12 @@ func AllVariations() []FullVar {
 		},
 		{
 			Fn: func(x, y, a, b, c, d, e, f float64) (float64, float64) {
+				return (x + 1) / 2, (y + 1) / 2
+			},
+			Text: "(x+1)/2, (y+1)/2",
+		},
+		{
+			Fn: func(x, y, a, b, c, d, e, f float64) (float64, float64) {
 				return (x + 1) / 2, y / 2
 			},
 			Text: "(x+1)/2, y/2",
@@ -30,6 +36,24 @@ func AllVariations() []FullVar {
 				return x / 2, (y + 1) / 2
 			},
 			Text: "x/2, (y+1)/2",
+		},
+		{
+			Fn: func(x, y, a, b, c, d, e, f float64) (float64, float64) {
+				return (x - 1) / 2, y / 2
+			},
+			Text: "(x-1)/2, y/2",
+		},
+		{
+			Fn: func(x, y, a, b, c, d, e, f float64) (float64, float64) {
+				return x / 2, (y - 1) / 2
+			},
+			Text: "x/2, (y-1)/2",
+		},
+		{
+			Fn: func(x, y, a, b, c, d, e, f float64) (float64, float64) {
+				return x / 2, (y + 3) / 4
+			},
+			Text: "x/2, (y+3)/4",
 		},
 		{
 			Fn: func(x, y, a, b, c, d, e, f float64) (float64, float64) {
@@ -94,24 +118,6 @@ func AllVariations() []FullVar {
 				return math.Sin(a*y) + c*math.Cos(a*x), math.Sin(b*x) + d*math.Cos(b*y)
 			},
 			Text: "sin(ay)+ccos(ax), sin(bx)+dcos(by)",
-		},
-		{
-			Fn: func(x, y, a, b, c, d, e, f float64) (float64, float64) {
-				return (x - 1) / 2, y / 2
-			},
-			Text: "(x-1)/2, y/2",
-		},
-		{
-			Fn: func(x, y, a, b, c, d, e, f float64) (float64, float64) {
-				return x / 2, (y - 1) / 2
-			},
-			Text: "x/2, (y-1)/2",
-		},
-		{
-			Fn: func(x, y, a, b, c, d, e, f float64) (float64, float64) {
-				return x / 2, (y + 3) / 4
-			},
-			Text: "x/2, (y+3)/4",
 		},
 	}
 }
