@@ -2,14 +2,24 @@ body #main {
   display: flex;
   flex-direction: column;
 }
-body h3.title {
+body .top-bar {
   margin: 0;
   padding: 20px;
-  text-align: center;
   background-color: #7c00ac;
+  color: #fff;
+}
+body .top-bar .title {
+  margin: 0;
+  padding: 0;
+  text-align: center;
   font-weight: bold;
   font-size: 35px;
-  color: #fff;
+}
+body .top-bar .loading {
+  float: left;
+}
+body .top-bar .equalize {
+  float: left;
 }
 body #content {
   display: flex;
@@ -61,11 +71,13 @@ body .child-images .children .child:hover {
   background-color: #ccc;
 }
 body .child-images .children .child .formula {
-  padding: 0 10px 0 30px;
+  padding: 10px;
   font-size: 30px;
 }
 body .child-images .children .child .checked {
   color: #008000;
   font-size: 20px;
+  padding: 0 10px 0 30px;
+  width: 20px;
 }
 

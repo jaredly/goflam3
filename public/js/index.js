@@ -26,10 +26,14 @@ function require(path, parent, orig) {
   // perform real require()
   // by invoking the module's
   // registered function
-  if (!module.exports) {
-    module.exports = {};
-    module.client = module.component = true;
-    module.call(this, module.exports, require.relative(resolved), module);
+  if (!module._resolving && !module.exports) {
+    var mod = {};
+    mod.exports = {};
+    mod.client = mod.component = true;
+    module._resolving = true;
+    module.call(this, mod.exports, require.relative(resolved), mod);
+    delete module._resolving;
+    module.exports = mod.exports;
   }
 
   return module.exports;
@@ -1564,42 +1568,49 @@ require.register("prototype/index.js", Function("exports, require, module",
 "var x = require('xon')\n\
   , request = require('superagent')\n\
 \n\
+function makeKey(funcs) {\n\
+  return funcs.map(function (f) {return f.Num + ''}).join(':')\n\
+}\n\
+\n\
 angular.module('MyApp', [])\n\
   .factory('highDef', function () {\n\
-    return function (funcs, cb) {\n\
-      if (!funcs) funcs = []\n\
-      var arg = funcs.map(function (f) {return f.Num + ''}).join(':')\n\
-      if (window.localStorage['flame-hd-' + arg]) {\n\
-        return cb(window.localStorage['flame-hd-' + arg], true)\n\
+    return function (key, cb) {\n\
+      if (window.localStorage['flame-hd-' + key]) {\n\
+        return cb(window.localStorage['flame-hd-' + key], true)\n\
       }\n\
-      request.get('/high-def?funcs=' + arg)\n\
+      request.get('/high-def?funcs=' + key)\n\
         .end(function (req) {\n\
           try {\n\
-            window.localStorage['flame-hd-' + arg] = req.text\n\
+            window.localStorage['flame-hd-' + key] = req.text\n\
           } catch (e) {}\n\
           cb(req.text)\n\
         })\n\
     }\n\
   })\n\
   .factory('getData', function () {\n\
-    return function (funcs, cb) {\n\
-      if (!funcs) funcs = []\n\
-      var arg = funcs.map(function (f) {return f.Num + ''}).join(':')\n\
-      if (funcs.length && window.localStorage['flame-' + arg]) {\n\
+    return function (key, cb) {\n\
+      if (window.localStorage['flame-' + key]) {\n\
         try {\n\
-          return cb(JSON.parse(window.localStorage['flame-' + arg]), true)\n\
+          return cb(JSON.parse(window.localStorage['flame-' + key]), true)\n\
         } catch (e) {}\n\
       }\n\
-      request.get('/render?funcs=' + arg)\n\
+      request.get('/render?funcs=' + key)\n\
         .end(function (req) {\n\
           try {\n\
-            window.localStorage['flame-' + arg] = JSON.stringify(req.body)\n\
+            window.localStorage['flame-' + key] = JSON.stringify(req.body)\n\
           } catch (e) {}\n\
           cb(req.body)\n\
         })\n\
     }\n\
   })\n\
   .controller('MainController', ['$scope', 'getData', 'highDef', function ($scope, getData, highDef) {\n\
+    \n\
+    window.addEventListener(\"hashchange\", function () {\n\
+      getData(window.location.hash.slice(1), function (data) {\n\
+        gotData(data)\n\
+      })\n\
+    })\n\
+\n\
     function gotData(data, cached) {\n\
       for (var name in data) {\n\
         if (!name.match(/^[a-zA-Z0-9_-]+$/)) continue;\n\
@@ -1607,15 +1618,21 @@ angular.module('MyApp', [])\n\
       }\n\
       if (!cached) $scope.$digest()\n\
     }\n\
-    getData([], gotData)\n\
+    // getData([], gotData)\n\
+    if (!window.location.hash || window.location.hash == '#') {\n\
+      window.location.hash = '5:7'\n\
+    } else {\n\
+      getData(window.location.hash.slice(1), gotData)\n\
+    }\n\
 \n\
     $scope.useChild = function (fractal) {\n\
-      getData(fractal.Formulas, gotData)\n\
+      window.location.hash = makeKey(fractal.Formulas)\n\
     }\n\
 \n\
     $scope.showHD = function () {\n\
+      if (!$scope.MainFormulas.length) return\n\
       $scope.showingHD = true\n\
-      highDef($scope.MainFormulas, function (data, cached) {\n\
+      highDef(makeKey($scope.MainFormulas), function (data, cached) {\n\
         $scope.HighDef = data\n\
         if (!cached) $scope.$digest()\n\
       })\n\
@@ -1633,6 +1650,9 @@ module.exports = function (document) {\n\
 }\n\
 //@ sourceURL=prototype/index.js"
 ));
+
+
+
 
 
 

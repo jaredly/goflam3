@@ -1,15 +1,15 @@
 package main
 
 import (
-	"bytes"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"github.com/codegangsta/cli"
-	"github.com/hoisie/web"
+	"bytes"
 	"image"
+	"encoding/json"
+	"encoding/base64"
+	"github.com/codegangsta/cli"
+	"github.com/codegangsta/martini"
 	"image/png"
-	"os"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -53,13 +53,18 @@ func GetWebFuncs() []WebFunc {
 	return res
 }
 
-func usingToFuns(using []bool) []FunConfig {
+func howTrue(bools []bool) int {
 	num := 0
-	for _, t := range using {
+	for _, t := range bools {
 		if t {
 			num += 1
 		}
 	}
+  return num
+}
+
+func usingToFuns(using []bool) []FunConfig {
+  num := howTrue(using)
 	res := make([]FunConfig, num)
 	z := 0
 	for i, t := range using {
@@ -82,17 +87,20 @@ func RenderChildren(width, height, iterations int, funs []FunConfig) []WebRender
 	for i := range res {
 		using[i] = !using[i]
 		funs := usingToFuns(using)
-		if len(funs) == 0 {
-			continue
-		}
+    var im *image.RGBA
 		start := time.Now()
-		res[i] = WebRender{
-			Image: imageToBase64(altFlame(Config{
+		if len(funs) == 0 {
+      im = blankImage(width, height)
+		} else {
+      im = altFlame(Config{
 				Width:      width,
 				Height:     height,
 				Iterations: iterations,
 				Functions:  funs,
-			})),
+			})
+    }
+		res[i] = WebRender{
+			Image: imageToBase64(im),
 			Disabled: using[i],
 			Time:     time.Since(start),
 			Formulas: funs,
@@ -116,61 +124,58 @@ func getFunsFromParam(param string) []FunConfig {
 	return ret
 }
 
+type Cachier map[string]InitialResponse
+
 func cliWebserver(c *cli.Context) {
-	w := web.NewServer()
-	w.Get("/render", func(ctx *web.Context) string {
+	m := martini.Classic()
+	// cachier := &Cachier{}
+	// m.Map(cachier)
+
+	m.Get("/render", func(resrw http.ResponseWriter, req *http.Request) string {
 		var funs []FunConfig
-		if "" != ctx.Params["funcs"] {
-			funs = getFunsFromParam(ctx.Params["funcs"])
-			if funs == nil {
-				funs = []FunConfig{
-					{5}, {7},
-				}
-			}
-		} else {
-			funs = []FunConfig{
-				{5}, {7},
-			}
+		resrw.Header().Set("Content-Type", "application/json")
+		req.ParseForm()
+		if 1 == len(req.Form["funcs"]) {
+			funs = getFunsFromParam(req.Form["funcs"][0])
 		}
-		res, _ := json.Marshal(InitialResponse{
-			MainImage: imageToBase64(altFlame(Config{
-				Width:      300,
-				Height:     300,
-				Iterations: 1000 * 1000,
-				Functions:  funs,
-			})),
+    var im *image.RGBA
+    if funs == nil || len(funs) == 0 {
+      im = blankImage(300, 300)
+    } else {
+      im = altFlame(Config{
+			  Width:      300,
+			  Height:     300,
+			  Iterations: 1000 * 1000,
+			  Functions:  funs,
+		  })
+    }
+		response := InitialResponse{
+			MainImage: imageToBase64(im),
 			MainFormulas: funs,
 			Formulas:     GetWebFuncs(),
 			ChildImages:  RenderChildren(150, 150, 100*1000, funs),
-		})
-		ctx.SetHeader("Content-Type", "application/json", true)
+		}
+		res, _ := json.Marshal(response)
 		return string(res)
 	})
-	w.Get("/high-def", func(ctx *web.Context) string {
+	m.Get("/high-def", func(req *http.Request) string {
 		var funs []FunConfig
-		if "" != ctx.Params["funcs"] {
-			funs = getFunsFromParam(ctx.Params["funcs"])
-			if funs == nil {
-				funs = []FunConfig{
-					{5}, {7},
-				}
-			}
-		} else {
-			funs = []FunConfig{
-				{5}, {7},
-			}
+		req.ParseForm()
+		if 1 == len(req.Form["funcs"]) {
+			funs = getFunsFromParam(req.Form["funcs"][0])
 		}
-		return imageToBase64(altFlame(Config{
-			Width:      1000,
-			Height:     1000,
-			Iterations: 10 * 1000 * 1000,
-			Functions:  funs,
-		}))
+    var im *image.RGBA
+    if funs == nil || len(funs) == 0 {
+      im = blankImage(1000, 1000)
+    } else {
+      im = altFlame(Config{
+			  Width:      1000,
+			  Height:     1000,
+			  Iterations: 10 * 1000 * 1000,
+			  Functions:  funs,
+		  })
+    }
+		return imageToBase64(im)
 	})
-	w.Config.StaticDir = "public"
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3000"
-	}
-	w.Run("0.0.0.0:" + port)
+	m.Run()
 }

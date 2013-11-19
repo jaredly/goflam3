@@ -57,57 +57,8 @@ func matrixToImage(mx *[][]int, width, height int) *image.RGBA {
 	return image
 }
 
-// get the third-largest value in a matrix. I can probably do this better
-func equalize_copy(values int, arr [][]int, maxp, minp float64) [][]int {
-	mx := 0
-	total := len(arr) * len(arr[0])
-	for _, row := range arr {
-		for _, v := range row {
-			if mx < v {
-				mx = v
-			}
-		}
-	}
-	hist := make([]int, mx+1)
-	for _, row := range arr {
-		for _, v := range row {
-			hist[v] += 1
-		}
-	}
-	min := 0
-	max := 0
-	top := int(float64(total) * maxp)
-	bottom := int(float64(total) * minp)
-	count := 0
-	// fmt.Printf("Eq", mx, total, top, bottom)
-	// fmt.Printf("Hist", hist)
-	for i, n := range hist {
-		count += n
-		if count > bottom && min == 0 {
-			min = i
-		}
-		if count > top {
-			max = i
-			break
-		}
-	}
-	// fmt.Printf("Eq", mx, total, min, max)
-	for i := range arr {
-		for j := range arr[i] {
-			if max == min {
-				arr[i][j] = 0
-				continue
-			}
-			if arr[i][j] > max {
-				arr[i][j] = max
-			}
-			if arr[i][j] < min {
-				arr[i][j] = min
-			}
-			arr[i][j] = values * (arr[i][j] - min) / (max - min)
-		}
-	}
-	return arr
+func blankImage(width, height int) *image.RGBA {
+  return image.NewRGBA(image.Rect(0, 0, width, height))
 }
 
 // get the third-largest value in a matrix. I can probably do this better
@@ -144,7 +95,15 @@ func equalize(arr *[][]int, values int, maxp, minp float64) {
 			break
 		}
 	}
-	// fmt.Printf("Eq", mx, total, min, max)
+	println("Eq", mx, total, min, max)
+  if min == max {
+    min = 0
+    if mx > 1 {
+      max = mx/2
+    } else {
+      max = 1
+    }
+  }
 	for i := range *arr {
 		for j := range (*arr)[i] {
 			if max == min {

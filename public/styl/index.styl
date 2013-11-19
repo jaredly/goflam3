@@ -4,20 +4,29 @@ body
     display: flex
     flex-direction: column
   
-  h3.title
+  .top-bar
     margin: 0
     padding: 20px
-    text-align: center
     background-color: #7C00AC
-    font-weight: bold
-    font-size: 35px
     color: white
-  
+
+    .title
+      margin: 0
+      padding: 0
+      text-align: center
+      font-weight: bold
+      font-size: 35px
+
+    .loading
+      float: left
+     
+    .equalize
+      float: left
+
   #content
     display: flex
     flex-direction: row
     flex: 1
-    
   
   .left-side
     padding: 20px
@@ -65,9 +74,12 @@ body
           background-color: #ccc
         
         .formula
-          padding: 0 10px 0 30px
+          padding: 10px
           font-size: 30px
         
         .checked
           color: green
           font-size: 20px
+          padding: 0 10px 0 30px
+          width: 60px
+          display: inline-block
