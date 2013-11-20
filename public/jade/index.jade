@@ -16,7 +16,13 @@ html
       })
   body
     div#main(ng-controller="MainController")
-      h3.title Fractal Flames
+      .top-bar
+        label.equalize.checkbox
+          input(type='checkbox', ng-model='logEqualize')
+          | Log Equalization
+        .loading(ng-show='loading')
+          img(src='images/loading.gif')
+        h3.title Fractal Flames
       .high-back(ng-show="showingHD", ng-click="hideHD()")
         img(ng-src="{{ HighDef }}")
       #content
@@ -28,8 +34,8 @@ html
         .child-images
           .children
             .child(ng-repeat="fractal in ChildImages", ng-click="useChild(fractal)")
-              img(ng-src="{{ fractal.Image }}")
+              img(ng-src="{{ fractal.Image || 'images/loading.gif' }}")
+              span.checked
+                i.glyphicon.glyphicon-ok(ng-hide="fractal.Disabled")
               span.formula {{ fractal.Text }}
-              span.checked(ng-hide="fractal.Disabled")
-                i.glyphicon.glyphicon-ok
     

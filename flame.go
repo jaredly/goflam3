@@ -1,40 +1,36 @@
 package main
 
 import (
-  "os"
-  "fmt"
-  // "strconv"
-  "image"
 	bin "encoding/binary"
-  // "image/png"
-  // "math"
-  "math/rand"
-  "time"
+	"fmt"
+	"image"
+	"math/rand"
+	"os"
+	"time"
 )
 
 type Point struct {
-  X, Y float64
+	X, Y float64
 }
 
+/*
 func loadData(fname string) *[]Point {
 	file, err := os.Open(fname)
 	if err != nil {
 		return nil
 	}
 	defer file.Close()
-	var num, i int32
+	var num, i int64
 	bin.Read(file, bin.LittleEndian, &num)
-	println("Read number", num)
 	data := make([]Point, num)
 	for i=0; i<num; i++ {
 		bin.Read(file, bin.LittleEndian, &data[i])
 	}
-	println("Done reading")
 	return &data
 }
 
 func storeData(fname string, data *[]Point) {
-	fmt.Fprintln(os.Stderr, "Storing Data")
+	// fmt.Fprintln(os.Stderr, "Storing Data")
 	file, err := os.Create(fname)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to open dataout file for writing")
@@ -42,46 +38,11 @@ func storeData(fname string, data *[]Point) {
 	}
 	defer file.Close()
 	num := len(*data)
-	println("Number to save :", num)
-	bin.Write(file, bin.LittleEndian, int32(num))
+	// println("Number to save :", num)
+	bin.Write(file, bin.LittleEndian, int64(num))
 	for _, v := range *data {
 		bin.Write(file, bin.LittleEndian, &v)
 	}
-}
-
-func altFlame(config Config) *image.RGBA {
-	start := time.Now()
-	allfuncs := AllVariations()
-
-	fmt.Fprintln(os.Stderr, "Flaming")
-	var data *[][]Pixel
-	if config.DataIn != "" {
-		fmt.Fprintln(os.Stderr, "From data")
-		data = loadMatrix(config.DataIn)
-		if data == nil {
-			fmt.Fprintln(os.Stderr, "Failed to open datain")
-			return nil
-		}
-		fmt.Fprintln(os.Stderr, "Load time", time.Since(start).String())
-	} else {
-		fmt.Fprintln(os.Stderr, "Generating")
-		data = genMatrix(config.Iterations, config.Width, config.Height, config.Functions, allfuncs)
-		fmt.Fprintln(os.Stderr, "Generate time", time.Since(start).String())
-		if config.DataOut != "" {
-			start = time.Now()
-			fmt.Fprintln(os.Stderr, "To data")
-			saveMatrix(config.DataOut, data)
-			fmt.Fprintln(os.Stderr, "Save time", time.Since(start).String())
-		}
-	}
-
-	start = time.Now()
-	if config.NoImage {
-		return nil
-	}
-	image := renderMatrix(data)
-	fmt.Fprintln(os.Stderr, "Render time", time.Since(start).String())
-	return image
 }
 
 func flame(config Config) *image.RGBA {
@@ -139,15 +100,52 @@ func generate(iters int, usefuncs []FunConfig, variations []Variation) *[]Point 
 	return &data
 }
 
-type Pixel struct {
-	Alpha int32
-	Funcs [20]int32
+*/
+
+func altFlame(config Config) *image.RGBA {
+	start := time.Now()
+	allfuncs := AllVariations()
+
+	fmt.Fprintln(os.Stderr, "Flaming", config.Functions)
+	var data *[][]Pixel
+	if config.DataIn != "" {
+		fmt.Fprintln(os.Stderr, "From data")
+		data = loadMatrix(config.DataIn)
+		if data == nil {
+			fmt.Fprintln(os.Stderr, "Failed to open datain")
+			return nil
+		}
+		fmt.Fprintln(os.Stderr, "Load time", time.Since(start).String())
+	} else {
+		fmt.Fprintln(os.Stderr, "Generating")
+		data = genMatrix(config.Iterations, config.Width, config.Height, config.Functions, allfuncs)
+		fmt.Fprintln(os.Stderr, "Generate time", time.Since(start).String())
+		if config.DataOut != "" {
+			start = time.Now()
+			fmt.Fprintln(os.Stderr, "To data")
+			saveMatrix(config.DataOut, data)
+			fmt.Fprintln(os.Stderr, "Save time", time.Since(start).String())
+		}
+	}
+
+	start = time.Now()
+	if config.NoImage {
+		return nil
+	}
+	image := renderMatrix(data)
+	fmt.Fprintln(os.Stderr, "Render time", time.Since(start).String())
+	return image
 }
 
-func genMatrix(iters, width, height int, usefuncs []FunConfig, variations []Variation) *[][]Pixel {
+type Pixel struct {
+	Alpha int64
+	Funcs [20]int64
+}
+
+func genMatrix(iters, width, height int, usefuncs []FunConfig, variations []FullVar) *[][]Pixel {
 	x := rand.Float64()*2 - 1
 	y := rand.Float64()*2 - 1
-	raw := make([]Pixel, height * width)
+	raw := make([]Pixel, height*width)
 	mx := make([][]Pixel, height)
 	for i := range mx {
 		mx[i], raw = raw[:width], raw[width:]
@@ -159,7 +157,7 @@ func genMatrix(iters, width, height int, usefuncs []FunConfig, variations []Vari
 	// and the F_i s that we'll be using
 	for at := 0; at < iters; at++ {
 		fi := rand.Intn(len(usefuncs))
-		x, y = variations[usefuncs[fi].Num](x, y, a, b, c, d, e, f)
+		x, y = variations[usefuncs[fi].Num].Fn(x, y, a, b, c, d, e, f)
 		if at < 20 {
 			continue
 		}
@@ -168,11 +166,17 @@ func genMatrix(iters, width, height int, usefuncs []FunConfig, variations []Vari
 		}
 		tx := int((x + 1) * float64(width) / 2)
 		if tx == width {
-			tx = width -1
+			tx = width - 1
 		}
 		ty := int((y + 1) * float64(height) / 2)
 		if ty == height {
 			ty = height - 1
+		}
+		if ty < 0 {
+			continue
+		}
+		if tx < 0 {
+			continue
 		}
 		mx[ty][tx].Alpha += 1
 		mx[ty][tx].Funcs[fi] += 1
@@ -189,9 +193,9 @@ func saveMatrix(fname string, matrix *[][]Pixel) {
 	}
 	defer file.Close()
 	// height
-	bin.Write(file, bin.LittleEndian, int32(len(*matrix)))
+	bin.Write(file, bin.LittleEndian, int64(len(*matrix)))
 	// width
-	bin.Write(file, bin.LittleEndian, int32(len((*matrix)[0])))
+	bin.Write(file, bin.LittleEndian, int64(len((*matrix)[0])))
 	for y := range *matrix {
 		for x := range (*matrix)[y] {
 			bin.Write(file, bin.LittleEndian, (*matrix)[y][x])
@@ -205,10 +209,10 @@ func loadMatrix(fname string) *[][]Pixel {
 		return nil
 	}
 	defer file.Close()
-	var height, width int32
+	var height, width int64
 	bin.Read(file, bin.LittleEndian, &height)
 	bin.Read(file, bin.LittleEndian, &width)
-	raw := make([]Pixel, height * width)
+	raw := make([]Pixel, height*width)
 	matrix := make([][]Pixel, height)
 	for i := range matrix {
 		matrix[i], raw = raw[:width], raw[width:]
@@ -220,43 +224,3 @@ func loadMatrix(fname string) *[][]Pixel {
 	}
 	return &matrix
 }
-
-/*
-func writeit(w, h, i int, use []int) {
-	m := flame(w, h, i, use)
-	name := "nolimit-"
-	num := ""
-	for _, z := range use {
-		num = strconv.Itoa(z) + num
-	}
-	toimg, _ := os.Create(name + num + ".png")
-	defer toimg.Close()
-
-	png.Encode(toimg, m)
-}
-
-func allCombos(w, h, i, from, to int) {
-	from = int(math.Pow(2, float64(from))) - 1
-	to = int(math.Pow(2, float64(to)))
-	for z := from; z < to; z++ {
-		n := 0
-		for s := z; s > 0; s >>= 1 {
-			if s % 2 == 1 {
-				n += 1
-			}
-		}
-		use := make([]int, n)
-		n = 0
-		a := 0
-		for s := z; s > 0; s >>= 1 {
-			if s % 2 == 1 {
-				use[n] = a
-				n += 1
-			}
-			a += 1
-		}
-		fmt.Println("Yeah", use)
-		writeit(w, h, i, use)
-	}
-}
-*/

@@ -1,5 +1,14 @@
 ## goflam3
 
+I've got this running on heroku here, so you can play around with the web interface.
+
+### Usage:
+
+`goflam3 serve` serve the webapp. That's what you see on heroku
+`goflam3 render` render an image. Hit `goflame3 render -h` for more information.
+
+## Background
+
 Flame fractals in golang
 
 Basing my work off of the following texts:
@@ -16,9 +25,5 @@ Basing my work off of the following texts:
 - Indicate progress
 - Perhaps jump to importing .flam3 files? Then it would be interesting to benchmark against flam3-render
 - Use a pool of goroutines to make awesome faster
-
-## Examples
-So far they're pretty subdued because I haven't implemented good equalization yet. But they're super cool!
-
-![one](https://github.com/jaredly/goflam3/blob/master/new.png?raw=true)
-![two](https://github.com/jaredly/goflam3/blob/master/new1235.png?raw=true)
+- enableable log equalization
+- enableable gamma equalization
