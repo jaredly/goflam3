@@ -13,95 +13,7 @@ type Point struct {
 	X, Y float64
 }
 
-/*
-func loadData(fname string) *[]Point {
-	file, err := os.Open(fname)
-	if err != nil {
-		return nil
-	}
-	defer file.Close()
-	var num, i int64
-	bin.Read(file, bin.LittleEndian, &num)
-	data := make([]Point, num)
-	for i=0; i<num; i++ {
-		bin.Read(file, bin.LittleEndian, &data[i])
-	}
-	return &data
-}
-
-func storeData(fname string, data *[]Point) {
-	// fmt.Fprintln(os.Stderr, "Storing Data")
-	file, err := os.Create(fname)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to open dataout file for writing")
-		return
-	}
-	defer file.Close()
-	num := len(*data)
-	// println("Number to save :", num)
-	bin.Write(file, bin.LittleEndian, int64(num))
-	for _, v := range *data {
-		bin.Write(file, bin.LittleEndian, &v)
-	}
-}
-
-func flame(config Config) *image.RGBA {
-	start := time.Now()
-	allfuncs := AllVariations()
-
-	fmt.Fprintln(os.Stderr, "Flaming")
-	var data *[]Point
-	if config.DataIn != "" {
-		fmt.Fprintln(os.Stderr, "From data")
-		data = loadData(config.DataIn)
-		if data == nil {
-			fmt.Fprintln(os.Stderr, "Failed to open datain")
-			return nil
-		}
-		fmt.Fprintln(os.Stderr, "Load time", time.Since(start).String())
-	} else {
-		fmt.Fprintln(os.Stderr, "Generating")
-		data = generate(config.Iterations, config.Functions, allfuncs)
-		fmt.Fprintln(os.Stderr, "Generate time", time.Since(start).String())
-		if config.DataOut != "" {
-			start = time.Now()
-			fmt.Fprintln(os.Stderr, "To data")
-			storeData(config.DataOut, data)
-			fmt.Fprintln(os.Stderr, "Save time", time.Since(start).String())
-		}
-	}
-
-	start = time.Now()
-	if config.NoImage {
-		return nil
-	}
-	image := render(config.Width, config.Height, data)
-	fmt.Fprintln(os.Stderr, "Render time", time.Since(start).String())
-	return image
-}
-
-func generate(iters int, usefuncs []FunConfig, variations []Variation) *[]Point {
-	x := rand.Float64()*2 - 1
-	y := rand.Float64()*2 - 1
-	data := make([]Point, iters)
-	// should these be passed in as an array?
-	var a, b, c, d, e, f float64
-	// these are our parameters
-	a, b, c, d, e, f = 1, 2, 1, 1, 4, 5
-	// and the F_i s that we'll be using
-	for at := 0; at < iters; at++ {
-		fi := rand.Intn(len(usefuncs))
-		x, y = variations[usefuncs[fi].Num](x, y, a, b, c, d, e, f)
-		if at < 20 {
-			continue
-		}
-		data[at] = Point{x, y}
-	}
-	return &data
-}
-
-*/
-
+// Generate the Fractal image
 func altFlame(config Config) *image.RGBA {
 	start := time.Now()
 	allfuncs := AllVariations()
@@ -137,11 +49,14 @@ func altFlame(config Config) *image.RGBA {
 	return image
 }
 
+// Holds information about a pixel; how many times it was hit, and by which
+// functions. We could actually probably drop the alpha...
 type Pixel struct {
 	Alpha int64
 	Funcs [20]int64
 }
 
+// Run the algorithm, returning a matrix of Pixels
 func genMatrix(iters, width, height int, usefuncs []FunConfig, variations []FullVar) *[][]Pixel {
 	x := rand.Float64()*2 - 1
 	y := rand.Float64()*2 - 1
@@ -184,6 +99,7 @@ func genMatrix(iters, width, height int, usefuncs []FunConfig, variations []Full
 	return &mx
 }
 
+// Save the matrix in raw form to a file
 func saveMatrix(fname string, matrix *[][]Pixel) {
 	fmt.Fprintln(os.Stderr, "Storing Data")
 	file, err := os.Create(fname)
@@ -203,6 +119,7 @@ func saveMatrix(fname string, matrix *[][]Pixel) {
 	}
 }
 
+// Load a raw matrix from a file
 func loadMatrix(fname string) *[][]Pixel {
 	file, err := os.Open(fname)
 	if err != nil {
