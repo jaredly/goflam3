@@ -11,11 +11,14 @@ import (
 	"os"
 )
 
+// FunConfig contains configuration for the various functions to be used in
+// generating a flame
 type FunConfig struct {
 	Num int
 	// Args []float64
 }
 
+// Config holds all of the parameters necessary to generate a flame
 type Config struct {
 	Width      int
 	Height     int
@@ -137,17 +140,3 @@ func write(outfile string, image *image.RGBA) {
 	}
 	png.Encode(out, image)
 }
-
-// cliwebserver
-
-/*
-func main() {
-  w := 800
-  h := 800
-  i := 10000000
-  writeit(w, h, i, []int{7,3})
-  // writeit(w, h, i, []int{3,5})
-  // callThemAll(w, h, i, 3, 12)
-  // allCombos(w, h, i, 0, 7)
-}
-*/

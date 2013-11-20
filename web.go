@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"bytes"
-	"image"
-	"encoding/json"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"github.com/codegangsta/cli"
 	"github.com/codegangsta/martini"
+	"image"
 	"image/png"
 	"net/http"
 	"strconv"
@@ -21,6 +21,7 @@ func imageToBase64(image *image.RGBA) string {
 	return fmt.Sprintf("data:image/png;base64,%s", base64.StdEncoding.EncodeToString(b.Bytes()))
 }
 
+// WebRender is the datatype holding each child image
 type WebRender struct {
 	Image    string
 	Time     time.Duration
@@ -34,6 +35,7 @@ type WebFunc struct {
 	Text string
 }
 
+// InitialResponse is the json object returned by the /render route.
 type InitialResponse struct {
 	MainImage    string
 	Formulas     []WebFunc
@@ -41,6 +43,7 @@ type InitialResponse struct {
 	MainFormulas []FunConfig
 }
 
+// GetWebFuncs translates the variations into a web-digestable format
 func GetWebFuncs() []WebFunc {
 	exp := AllVariations()
 	res := make([]WebFunc, len(exp))
@@ -60,11 +63,11 @@ func howTrue(bools []bool) int {
 			num += 1
 		}
 	}
-  return num
+	return num
 }
 
 func usingToFuns(using []bool) []FunConfig {
-  num := howTrue(using)
+	num := howTrue(using)
 	res := make([]FunConfig, num)
 	z := 0
 	for i, t := range using {
@@ -76,6 +79,8 @@ func usingToFuns(using []bool) []FunConfig {
 	return res
 }
 
+// RenderChildren renders all flames that would be produced by
+// enabling/disabling each function variation in turn
 func RenderChildren(width, height, iterations int, funs []FunConfig) []WebRender {
 	texts := AllVariations()
 	variations := len(texts)
@@ -87,20 +92,20 @@ func RenderChildren(width, height, iterations int, funs []FunConfig) []WebRender
 	for i := range res {
 		using[i] = !using[i]
 		funs := usingToFuns(using)
-    var im *image.RGBA
+		var im *image.RGBA
 		start := time.Now()
 		if len(funs) == 0 {
-      im = blankImage(width, height)
+			im = blankImage(width, height)
 		} else {
-      im = altFlame(Config{
+			im = altFlame(Config{
 				Width:      width,
 				Height:     height,
 				Iterations: iterations,
 				Functions:  funs,
 			})
-    }
+		}
 		res[i] = WebRender{
-			Image: imageToBase64(im),
+			Image:    imageToBase64(im),
 			Disabled: using[i],
 			Time:     time.Since(start),
 			Formulas: funs,
@@ -138,19 +143,19 @@ func cliWebserver(c *cli.Context) {
 		if 1 == len(req.Form["funcs"]) {
 			funs = getFunsFromParam(req.Form["funcs"][0])
 		}
-    var im *image.RGBA
-    if funs == nil || len(funs) == 0 {
-      im = blankImage(300, 300)
-    } else {
-      im = altFlame(Config{
-			  Width:      300,
-			  Height:     300,
-			  Iterations: 1000 * 1000,
-			  Functions:  funs,
-		  })
-    }
+		var im *image.RGBA
+		if funs == nil || len(funs) == 0 {
+			im = blankImage(300, 300)
+		} else {
+			im = altFlame(Config{
+				Width:      300,
+				Height:     300,
+				Iterations: 1000 * 1000,
+				Functions:  funs,
+			})
+		}
 		response := InitialResponse{
-			MainImage: imageToBase64(im),
+			MainImage:    imageToBase64(im),
 			MainFormulas: funs,
 			Formulas:     GetWebFuncs(),
 			ChildImages:  RenderChildren(150, 150, 100*1000, funs),
@@ -164,17 +169,17 @@ func cliWebserver(c *cli.Context) {
 		if 1 == len(req.Form["funcs"]) {
 			funs = getFunsFromParam(req.Form["funcs"][0])
 		}
-    var im *image.RGBA
-    if funs == nil || len(funs) == 0 {
-      im = blankImage(1000, 1000)
-    } else {
-      im = altFlame(Config{
-			  Width:      1000,
-			  Height:     1000,
-			  Iterations: 10 * 1000 * 1000,
-			  Functions:  funs,
-		  })
-    }
+		var im *image.RGBA
+		if funs == nil || len(funs) == 0 {
+			im = blankImage(1000, 1000)
+		} else {
+			im = altFlame(Config{
+				Width:      1000,
+				Height:     1000,
+				Iterations: 10 * 1000 * 1000,
+				Functions:  funs,
+			})
+		}
 		return imageToBase64(im)
 	})
 	m.Run()

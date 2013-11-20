@@ -13,8 +13,8 @@ type Point struct {
 	X, Y float64
 }
 
-// Generate the Fractal image
-func altFlame(config Config) *image.RGBA {
+// AltFlame generates the Fractal image
+func AltFlame(config Config) *image.RGBA {
 	start := time.Now()
 	allfuncs := AllVariations()
 

@@ -58,7 +58,7 @@ func matrixToImage(mx *[][]int, width, height int) *image.RGBA {
 }
 
 func blankImage(width, height int) *image.RGBA {
-  return image.NewRGBA(image.Rect(0, 0, width, height))
+	return image.NewRGBA(image.Rect(0, 0, width, height))
 }
 
 // get the third-largest value in a matrix. I can probably do this better
@@ -96,14 +96,14 @@ func equalize(arr *[][]int, values int, maxp, minp float64) {
 		}
 	}
 	println("Eq", mx, total, min, max)
-  if min == max {
-    min = 0
-    if mx > 1 {
-      max = mx/2
-    } else {
-      max = 1
-    }
-  }
+	if min == max {
+		min = 0
+		if mx > 1 {
+			max = mx / 2
+		} else {
+			max = 1
+		}
+	}
 	for i := range *arr {
 		for j := range (*arr)[i] {
 			if max == min {
