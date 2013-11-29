@@ -1,6 +1,7 @@
-package main
+package flame
 
 import (
+    // "fmt"
 	"image"
 	"image/color"
 	"math"
@@ -18,7 +19,7 @@ func printMx(mx *[][]int) {
 	}
 }
 
-func renderMatrix(matrix *[][]Pixel) *image.RGBA {
+func renderMatrix(matrix *[][]Pixel, log bool) *image.RGBA {
 	height := len(*matrix)
 	width := len((*matrix)[0])
 	mx := make([][]int, len(*matrix))
@@ -28,11 +29,11 @@ func renderMatrix(matrix *[][]Pixel) *image.RGBA {
 			mx[y][x] = int((*matrix)[y][x].Alpha)
 		}
 	}
-	return matrixToImage(&mx, width, height)
+	return matrixToImage(&mx, width, height, log)
 }
 
 // data the data and render it within certain dimentions
-func render(width, height int, data *[]Point) *image.RGBA {
+func render(width, height int, data *[]Point, log bool) *image.RGBA {
 	// now render
 	mx := make([][]int, height)
 	for y := range mx {
@@ -41,11 +42,17 @@ func render(width, height int, data *[]Point) *image.RGBA {
 	for _, v := range *data {
 		mx[int((v.Y+1)/2*float64(height-1))][int((v.X+1)/2*float64(width-1))] += 1
 	}
-	return matrixToImage(&mx, width, height)
+	return matrixToImage(&mx, width, height, log)
 }
 
-func matrixToImage(mx *[][]int, width, height int) *image.RGBA {
-	equalize(mx, 255, .995, .0005)
+func matrixToImage(mx *[][]int, width, height int, log bool) *image.RGBA {
+        if log {
+            if !equalize_log(mx, 255, .995, .0005) {
+                return nil
+            }
+        } else {
+            equalize(mx, 255, .995, .0005)
+    }
 	image := image.NewRGBA(image.Rect(0, 0, width, height))
 	// now write the values to an image, equalized by the 3rd-brightest point
 	for x, row := range *mx {
@@ -57,11 +64,6 @@ func matrixToImage(mx *[][]int, width, height int) *image.RGBA {
 	return image
 }
 
-func blankImage(width, height int) *image.RGBA {
-	return image.NewRGBA(image.Rect(0, 0, width, height))
-}
-
-// get the third-largest value in a matrix. I can probably do this better
 func equalize(arr *[][]int, values int, maxp, minp float64) {
 	mx := 0
 	total := len(*arr) * len((*arr)[0])
@@ -140,7 +142,14 @@ func make_histogram(mx *[][]float64, by float64, max float64) *[]int {
 	hist := make([]int, int(by)+1)
 	for y := range *mx {
 		for x := range (*mx)[y] {
-			hist[int((*mx)[y][x]*by/max)] += 1
+                    a := int((*mx)[y][x]/max*by)
+                    /*
+                    if a > int(by) {
+                        fmt.Println("WAT", a, by, (*mx)[y][x], max)
+                    }
+                    fmt.Println("ait", a, by, (*mx)[y][x], max)
+                    */
+                    hist[a] += 1
 		}
 	}
 	return &hist
@@ -167,12 +176,18 @@ func get_max_min(hist *[]int, total int, maxp, minp float64) (int, int) {
 	return max, min
 }
 
-func equalize_log(irr *[][]int, values int, maxp, minp float64) {
+func equalize_log(irr *[][]int, values int, maxp, minp float64) bool {
 	arr := make([][]float64, len(*irr))
-	for x := range arr {
-		arr[x] = make([]float64, len((*irr)[0]))
+	for y := range arr {
+		arr[y] = make([]float64, len((*irr)[y]))
+                for x := range arr[y] {
+                    arr[y][x] = float64((*irr)[y][x])
+                }
 	}
 	mx := find_max(&arr)
+        if mx == 0 {
+            return false
+        }
 
 	by := 255 * 10.0
 	total := len(arr) * len((arr)[0])
@@ -195,4 +210,5 @@ func equalize_log(irr *[][]int, values int, maxp, minp float64) {
 			(*irr)[i][j] = int(values * (v - min) / (max - min))
 		}
 	}
+        return true
 }

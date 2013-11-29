@@ -1,4 +1,4 @@
-package main
+package flame
 
 import (
 	bin "encoding/binary"
@@ -13,8 +13,17 @@ type Point struct {
 	X, Y float64
 }
 
-// AltFlame generates the Fractal image
-func AltFlame(config Config) *image.RGBA {
+func FromConfigFile(fname string) (*image.RGBA, error) {
+    var c Config
+    err := ReadConfig(fname, &c)
+    if err != nil {
+	return nil, err
+    }
+    return Flame(c)
+}
+
+// Flame generates the Fractal image
+func Flame(config Config) (*image.RGBA, error) {
 	start := time.Now()
 	allfuncs := AllVariations()
 
@@ -25,7 +34,7 @@ func AltFlame(config Config) *image.RGBA {
 		data = loadMatrix(config.DataIn)
 		if data == nil {
 			fmt.Fprintln(os.Stderr, "Failed to open datain")
-			return nil
+			return nil, nil
 		}
 		fmt.Fprintln(os.Stderr, "Load time", time.Since(start).String())
 	} else {
@@ -42,11 +51,11 @@ func AltFlame(config Config) *image.RGBA {
 
 	start = time.Now()
 	if config.NoImage {
-		return nil
+		return nil, nil
 	}
-	image := renderMatrix(data)
+	image := renderMatrix(data, config.LogEqualize)
 	fmt.Fprintln(os.Stderr, "Render time", time.Since(start).String())
-	return image
+	return image, nil
 }
 
 // Holds information about a pixel; how many times it was hit, and by which
