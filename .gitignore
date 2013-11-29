@@ -21,3 +21,5 @@ _testmain.go
 
 *.exe
 goflam3
+*.png
+*.bin
