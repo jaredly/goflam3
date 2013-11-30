@@ -4,9 +4,9 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"fmt"
   /*
 	bin "encoding/binary"
-	"fmt"
 	"math/rand"
 	"os"
 	"io"
@@ -14,15 +14,27 @@ import (
   */
 )
 
+func PreviewAll(width, height, xs, ys, cols int) *image.RGBA {
+  fns := AllVariations()
+  out := image.NewRGBA(image.Rect(0, 0, width*cols, height*int(len(fns)/cols)))
+  for i, fn := range fns {
+    x := (i%cols) * width
+    y := (i/cols) * height
+    fmt.Println(x,y,i,cols,width,height)
+    draw.Draw(out, image.Rect(x, y, x+width, y+height), RenderPreview(width, height, xs, ys, fn.Fn), image.Point{0, 0}, draw.Over)
+  }
+  return out
+}
+
 func RenderPreview(width, height, xs, ys int, fn Variation) *image.RGBA {
   return lines(width, height, matrix(xs, ys, fn))
 }
 
 func matrix(width, height int, fn Variation) [][]Point {
   data := make([][]Point, height)
-	// these are our parameters
-	var a, b, c, d, e, f float64
-	a, b, c, d, e, f = DefaultParams()
+  // these are our parameters
+  var a, b, c, d, e, f float64
+  a, b, c, d, e, f = DefaultParams()
   for y := range data {
     data[y] = make([]Point, width)
     for x := range data[y] {
@@ -45,7 +57,7 @@ func lines(width, height int, data [][]Point) *image.RGBA {
   img := image.NewRGBA(image.Rect(0, 0, width, height))
   ys := len(data)
   xs := len(data[0])
-  parts := 4
+  parts := 10
   for i := 0; i < parts + 1; i++ {
     for y := range data {
       for x := range data[y] {
@@ -78,15 +90,15 @@ func tow(x float64, w, margin int) int {
 }
 
 func frow(x int, w int) float64 {
-  return float64(x*2)/float64(w) - 1
+  return float64(x*2)/float64(w-1) - 1
 }
 
 func line(width, height int, p1, p2 Point, c color.RGBA, img draw.Image) {
   // a := c.A
   x1 := tow(p1.X, width, width/10)
-  y1 := tow(p1.Y, height, height/10)
+  y1 := tow(-p1.Y, height, height/10)
   x2 := tow(p2.X, width, width/10)
-  y2 := tow(p2.Y, height, height/10)
+  y2 := tow(-p2.Y, height, height/10)
   bresneham(img, c, x1, y1, x2, y2)
 }
 
