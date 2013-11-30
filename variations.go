@@ -11,6 +11,10 @@ type FullVar struct {
 	Text string
 }
 
+func DefaultParams() (float64, float64, float64, float64, float64, float64) {
+  return 1, 2, 1, 1, 4, 5
+}
+
 func AllVariations() []FullVar {
 	return []FullVar{
 		{

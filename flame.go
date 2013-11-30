@@ -119,7 +119,7 @@ func genMatrix(iters int, dims Dims, usefuncs []FunConfig, variations []FullVar)
 	y := rand.Float64()*2 - 1
 	var a, b, c, d, e, f float64
 	// these are our parameters
-	a, b, c, d, e, f = 1, 2, 1, 1, 4, 5
+	a, b, c, d, e, f = DefaultParams()
 	// and the F_i s that we'll be using
 	for at := 0; at < iters; at++ {
 		fi := rand.Intn(len(usefuncs))
