@@ -6,8 +6,18 @@ import (
 	"image"
 	"math/rand"
 	"os"
+	"io"
 	"time"
 )
+
+const LOG = false
+
+func log(i io.Writer, a... interface{}) {
+    if (LOG) {
+	fmt.Fprintln(i, a...)
+    }
+}
+
 
 type Point struct {
 	X, Y float64
@@ -27,25 +37,25 @@ func Flame(config Config) (*image.RGBA, error) {
 	start := time.Now()
 	allfuncs := AllVariations()
 
-	fmt.Fprintln(os.Stderr, "Flaming", config.Functions)
+	log(os.Stderr, "Flaming", config.Functions, config.Dims)
 	var data *[][]Pixel
 	if config.DataIn != "" {
-		fmt.Fprintln(os.Stderr, "From data")
+		log(os.Stderr, "From data")
 		data = loadMatrix(config.DataIn)
 		if data == nil {
-			fmt.Fprintln(os.Stderr, "Failed to open datain")
+			log(os.Stderr, "Failed to open datain")
 			return nil, nil
 		}
-		fmt.Fprintln(os.Stderr, "Load time", time.Since(start).String())
+		log(os.Stderr, "Load time", time.Since(start).String())
 	} else {
-		fmt.Fprintln(os.Stderr, "Generating")
-		data = genMatrix(config.Iterations, config.Width, config.Height, config.Functions, allfuncs)
-		fmt.Fprintln(os.Stderr, "Generate time", time.Since(start).String())
+		log(os.Stderr, "Generating")
+		data = genMatrix(config.Iterations, config.Dims, config.Functions, allfuncs)
+		log(os.Stderr, "Generate time", time.Since(start).String())
 		if config.DataOut != "" {
 			start = time.Now()
-			fmt.Fprintln(os.Stderr, "To data")
+			log(os.Stderr, "To data")
 			saveMatrix(config.DataOut, data)
-			fmt.Fprintln(os.Stderr, "Save time", time.Since(start).String())
+			log(os.Stderr, "Save time", time.Since(start).String())
 		}
 	}
 
@@ -54,7 +64,7 @@ func Flame(config Config) (*image.RGBA, error) {
 		return nil, nil
 	}
 	image := renderMatrix(data, config.LogEqualize)
-	fmt.Fprintln(os.Stderr, "Render time", time.Since(start).String())
+	log(os.Stderr, "Render time", time.Since(start).String())
 	return image, nil
 }
 
@@ -65,16 +75,48 @@ type Pixel struct {
 	Funcs [20]int64
 }
 
+/*
+func goMatrix(concurrency, iters, width, height int, usefuncs []FunConfig, variations []FullVar) *[][]Pixel {
+    // return genMatrix(iters, width, height, usefuncs, variations)
+    cha := make(chan bool)
+    raw := make([]Pixel, height*width)
+    mx := make([][]Pixel, height)
+    beg := time.Now()
+    for i := range mx {
+	mx[i], raw = raw[:width], raw[width:]
+    }
+    worker := func(i int){
+	start := time.Now()
+	log(os.Stderr, "Delay", i, time.Since(beg).String())
+	populateMatrix(&mx, iters/concurrency, width, height, usefuncs, variations)
+	log(os.Stderr, "Gen time", i, time.Since(start).String())
+	cha<-true
+    }
+    for i:=0; i<concurrency; i++ {
+	go worker(i)
+    }
+    for i:=0; i<concurrency; i++ {
+	<-cha
+    }
+    return &mx
+}
+*/
+
 // Run the algorithm, returning a matrix of Pixels
-func genMatrix(iters, width, height int, usefuncs []FunConfig, variations []FullVar) *[][]Pixel {
+func genMatrix(iters int, dims Dims, usefuncs []FunConfig, variations []FullVar) *[][]Pixel {
+	raw := make([]Pixel, dims.Height*dims.Width)
+	mx := make([][]Pixel, dims.Height)
+	for i := range mx {
+		mx[i], raw = raw[:dims.Width], raw[dims.Width:]
+	}
+	/*
+	    populateMatrix(&mx, iters, dims, usefuncs, variations)
+	    }
+	    func populateMatrix(mx *[][]Pixel, iters, width, height int, usefuncs []FunConfig, variations []FullVar) {
+	*/
+	// should these be passed in as an array?
 	x := rand.Float64()*2 - 1
 	y := rand.Float64()*2 - 1
-	raw := make([]Pixel, height*width)
-	mx := make([][]Pixel, height)
-	for i := range mx {
-		mx[i], raw = raw[:width], raw[width:]
-	}
-	// should these be passed in as an array?
 	var a, b, c, d, e, f float64
 	// these are our parameters
 	a, b, c, d, e, f = 1, 2, 1, 1, 4, 5
@@ -88,19 +130,25 @@ func genMatrix(iters, width, height int, usefuncs []FunConfig, variations []Full
 		if x > 1 || x < -1 || y > 1 || y < -1 {
 			continue
 		}
-		tx := int((x + 1) * float64(width) / 2)
-		if tx == width {
-			tx = width - 1
+		ty := int(((x - dims.X) * dims.Xscale + 1) * float64(dims.Width) / 2)
+		if ty == dims.Width {
+			ty = dims.Width - 1
 		}
-		ty := int((y + 1) * float64(height) / 2)
-		if ty == height {
-			ty = height - 1
+		tx := int(((-y + dims.Y) * dims.Yscale + 1) * float64(dims.Height) / 2)
+		if tx == dims.Height {
+			tx = dims.Height - 1
 		}
 		if ty < 0 {
 			continue
 		}
 		if tx < 0 {
 			continue
+		}
+		if tx > dims.Width {
+		    continue
+		}
+		if ty > dims.Height {
+		    continue
 		}
 		mx[ty][tx].Alpha += 1
 		mx[ty][tx].Funcs[fi] += 1
@@ -110,10 +158,10 @@ func genMatrix(iters, width, height int, usefuncs []FunConfig, variations []Full
 
 // Save the matrix in raw form to a file
 func saveMatrix(fname string, matrix *[][]Pixel) {
-	fmt.Fprintln(os.Stderr, "Storing Data")
+	log(os.Stderr, "Storing Data")
 	file, err := os.Create(fname)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to open dataout file for writing")
+		log(os.Stderr, "Failed to open dataout file for writing")
 		return
 	}
 	defer file.Close()

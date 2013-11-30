@@ -12,10 +12,18 @@ type FunConfig struct {
 	// Args []float64
 }
 
+type Dims struct {
+  Width int
+  Height int
+  X float64
+  Y float64
+  Xscale float64
+  Yscale float64
+}
+
 // Config holds all of the parameters necessary to generate a flame
 type Config struct {
-	Width      int
-	Height     int
+	Dims Dims
 	Iterations int
 	Functions  []FunConfig
 	DataIn     string
