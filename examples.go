@@ -33,24 +33,41 @@ func matrix(width, height int, fn Variation) [][]Point {
   return data
 }
 
+func interp(i, n int, p1, p2 Point) (Point, Point) {
+  dx := (p2.X-p1.X)/float64(n)
+  dy := (p2.Y-p1.Y)/float64(n)
+  z := float64(i)
+  return Point{p1.X + dx*z, p1.Y + dy*z}, Point{p1.X + dx*(z+1), p1.Y + dy*(z+1)}
+}
+
 // width & height correspond to the output image
 func lines(width, height int, data [][]Point) *image.RGBA {
+  img := image.NewRGBA(image.Rect(0, 0, width, height))
+  ys := len(data)
+  xs := len(data[0])
+  parts := 4
+  for i := 0; i < parts + 1; i++ {
+    for y := range data {
+      for x := range data[y] {
+        // draw down
+        p1, p2 := interp(i, parts, Point{frow(x, xs), frow(y, ys)}, data[y][x])
+        line(width, height, p1, p2, color.RGBA{0, 0, 0, uint8(255*i/parts)}, img)
+      }
+    }
+  }
+  return img
+}
+
+// width & height correspond to the output image
+func oldlines(width, height int, data [][]Point) *image.RGBA {
   img := image.NewRGBA(image.Rect(0, 0, width, height))
   ys := len(data)
   xs := len(data[0])
   for y := range data {
     for x := range data[y] {
       // draw down
-      line(width, height, Point{frow(x, xs), frow(y, ys)}, data[y][x], color.RGBA{0, 0, 0, 255}, img)
-      if y < ys - 1 {
-        // line(width, height, data[y][x], data[y+1][x], color.RGBA{0, 0, 0, 255}, img)
-        // line(width, height, Point{frow(x, xs), frow(y, ys)}, Point{frow(x, xs), frow(y+1, ys)}, color.RGBA{0, 0, 255, 100}, img)
-      }
-      // draw right
-      if x < xs - 1 {
-        // line(width, height, data[y][x], data[y][x+1], color.RGBA{0, 0, 0, 255}, img)
-        // line(width, height, Point{frow(x, xs), frow(y, ys)}, Point{frow(x+1, xs), frow(y, ys)}, color.RGBA{0, 0, 255, 100}, img)
-      }
+      o := Point{frow(x, xs), frow(y, ys)}
+      line(width, height, o, data[y][x], color.RGBA{0, 0, 0, 255}, img)
     }
   }
   return img
@@ -65,18 +82,12 @@ func frow(x int, w int) float64 {
 }
 
 func line(width, height int, p1, p2 Point, c color.RGBA, img draw.Image) {
-  a := int(c.A)
+  // a := c.A
   x1 := tow(p1.X, width, width/10)
   y1 := tow(p1.Y, height, height/10)
   x2 := tow(p2.X, width, width/10)
   y2 := tow(p2.Y, height, height/10)
-  parts := 10
-  dx := (x2 - x1)/parts
-  dy := (y2 - y1)/parts
-  for i := 0; i < parts; i++ {
-    c.A = uint8(a*i/parts)
-    bresneham(img, c, x1+dx*i, y1+dy*i, x2+dx*(i+1), y2+dy*(i+1))
-  }
+  bresneham(img, c, x1, y1, x2, y2)
 }
 
 func abs(i int) int {
@@ -85,10 +96,9 @@ func abs(i int) int {
 }
 
 // alg taken from wikipedia
-func bresneham(image draw.Image, c color.RGBA, x0, y0, x1, y1 int) {
+func bresneham(image draw.Image, c color.Color, x0, y0, x1, y1 int) {
   dx := abs(x1-x0)
   dy := abs(y1-y0)
-  a := c.A
   var sx, sy int
   if x0 < x1 {
     sx = 1
@@ -103,8 +113,6 @@ func bresneham(image draw.Image, c color.RGBA, x0, y0, x1, y1 int) {
   err := dx-dy
 
   for {
-    _, _, _, b := image.At(x0, y0).RGBA()
-    c.A = uint8(b*255/0xFFFF) + a
     image.Set(x0,y0,c)
     if x0 == x1 && y0 == y1 { return }
     e2 := 2*err
@@ -113,8 +121,6 @@ func bresneham(image draw.Image, c color.RGBA, x0, y0, x1, y1 int) {
       x0 = x0 + sx
     }
     if x0 == x1 && y0 == y1 {
-      _, _, _, b := image.At(x0, y0).RGBA()
-      c.A = uint8(b*255/0xFFFF) + a
       image.Set(x0,y0, c)
       return
     }
