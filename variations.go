@@ -123,5 +123,43 @@ func AllVariations() []FullVar {
 			},
 			Text: "sin(ay)+ccos(ax), sin(bx)+dcos(by)",
 		},
+		{
+			Fn: func(x, y, a, b, c, d, e, f float64) (float64, float64) {
+				  if x == 0 { x = 1 }
+				  if y == 0 {y=1}
+				return math.Sin(1/x), math.Sin(1/y)
+			},
+			Text: "sin(1/x), sin(1/y)",
+		},
+		{
+			Fn: func(x, y, a, b, c, d, e, f float64) (float64, float64) {
+				  if x == 0 { x = 1 }
+				  if y == 0 { y = 1 }
+				return math.Cos(1/x), math.Cos(1/y)
+			},
+			Text: "cos(1/x), cos(1/y)",
+		},
+		{
+			Fn: func(x, y, a, b, c, d, e, f float64) (float64, float64) {
+				  if x == 0 { x = 1 }
+				  if y == 0 { y = 1 }
+				return math.Sin(1/x)*math.Cos(1/x), math.Sin(1/x)*math.Cos(1/y)
+			},
+			Text: "sin.cos(1/x), sin.cos(1/y)",
+		},
+		/*
+		{
+			Fn: func(x, y, a, b, c, d, e, f float64) (float64, float64) {
+				  if x == 0 { x = 1 }
+				  a = math.Cos(x)
+				  if a == 0 { a = 1 }
+				  if y == 0 { y = 1 }
+				  b = math.Cos(y)
+				  if b == 0 { b = 1 }
+				return math.Sin(x)/a, math.Sin(y)/b
+			},
+			Text: "tan(x), tan(y)",
+		},
+		*/
 	}
 }
